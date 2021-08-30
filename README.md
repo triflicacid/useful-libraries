@@ -1,5 +1,10 @@
 # Useful TypeScript Libraries
 
+# `Blocker.ts`
+**About**: A class for blocking code using Promises
+
+**Dependencies**: *None*
+
 # `Flags.ts`
 **About**: A class for generating Flags and a class for representing an inetger flag
 
