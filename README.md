@@ -14,3 +14,8 @@
 **About**: A class to create a Piechart
 
 **Dependencies**: *None*
+
+# `utils.ts`
+**About**: A collection of useful functions
+
+**Dependencies**: *None*
