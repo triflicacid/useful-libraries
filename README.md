@@ -1,12 +1,12 @@
 # Useful TypeScript Libraries
 
-# `Font.ts`
-**About**: A class for representing fonts.
+# `Flags.ts`
+**About**: A class for generating Flags and a class for representing an inetger flag
 
 **Dependencies**: *None*
 
-# `Flags.ts`
-**About**: A class for generating Flags and a class for representing an inetger flag
+# `Font.ts`
+**About**: A class for representing fonts.
 
 **Dependencies**: *None*
 
@@ -14,6 +14,11 @@
 **About**: A class to create a Piechart
 
 **Dependencies**: *None*
+
+# `SQLiteDatabase.ts`
+**About**: A class which creates a connection to an SQLite database. Also provided each method as a raw function.
+
+**Dependencies**: `sqlite3` npm library
 
 # `utils.ts`
 **About**: A collection of useful functions
