@@ -1,3 +1,10 @@
+/** Class which indicates that the Blocke has been cancelled  */
+export class BlockerCancelledError extends Error {
+  constructor() {
+    super(`CANCELLED`);
+  }
+}
+
 /** Acts as a code block when called in async functions */
 export class Blocker {
   private _resolve: (value: unknown) => void | undefined = undefined;
@@ -18,19 +25,17 @@ export class Blocker {
     }
   }
 
-  /** Forget what we were blocking (block still remains in place) */
-  public forget(throwError = true) {
-    if (throwError && this._reject) this._reject("Error: 'forget' was called, terminating this blockade");
-    this._resolve = undefined;
-    this._reject = undefined;
+  /** Forget what we were blocking (reject promise with special error) */
+  public forget() {
+    this.error(new BlockerCancelledError());
   }
 
   /** Unblock code execution. Pass in value to blocked line. */
   public unblock(value: any) {
     if (this.isBlocking()) {
-      let fn = this._resolve;
-      this.forget(false);
-      fn(value);
+      this._reject = undefined;
+      this._resolve(value);
+      this._resolve = undefined;
     } else {
       throw new Error(`#<Blocker>.unblock: nothing to unblock`);
     }
@@ -39,9 +44,9 @@ export class Blocker {
   /** Throw an error at the block  */
   public error(e: Error) {
     if (this.isBlocking()) {
-      let fn = this._reject;
-      this.forget(false);
-      fn(e);
+      this._resolve = undefined;
+      this._reject(e);
+      this._reject = undefined;
     } else {
       throw new Error(`#<Blocker>.error: no block available to throw error on`);
     }
