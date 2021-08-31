@@ -1,5 +1,7 @@
 # Useful TypeScript Libraries
 
+**NOTE** The libraries themselves are in `libs/`. Everything else is testing code.
+
 # `Blocker.ts`
 **About**: A class for blocking code using Promises
 

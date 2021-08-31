@@ -45,7 +45,7 @@ function parseColor(mode: ColorMode, arg: ColorArg = '#000'): string {
 
 var BEZIER_DELTA = 0.05;
 
-class RCanv {
+export class RCanv {
   private _canv: HTMLCanvasElement;
   private _ctx: CanvasRenderingContext2D;
   private _cmode: ColorMode = "HSL";

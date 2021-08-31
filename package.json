@@ -1,0 +1,24 @@
+{
+  "name": "useful-libraries",
+  "version": "1.0.0",
+  "description": "**NOTE** The libraries themselves are in `libs/`. Everything else is testing code.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "parcel test.html"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ruben4447/useful-libraries.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ruben4447/useful-libraries/issues"
+  },
+  "homepage": "https://github.com/ruben4447/useful-libraries#readme",
+  "dependencies": {
+    "parcel": "*"
+  }
+}
