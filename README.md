@@ -25,6 +25,11 @@
 
 **Dependencies**: `sqlite3` npm library
 
+# `Stack.ts`
+**About**: A class which implements the stack data structure
+
+**Dependencies**: *None*
+
 # `utils.ts`
 **About**: A collection of useful functions
 
