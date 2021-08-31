@@ -20,6 +20,11 @@
 
 **Dependencies**: *None*
 
+# `RCanv.ts`
+**About**: A class which managed drawing to a canvas
+
+**Dependencies**: `Font.ts`, `utils.ts`
+
 # `Sound.ts`
 **About**: Classes for manipulating/managing sounds.
 
