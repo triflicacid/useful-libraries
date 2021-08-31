@@ -43,6 +43,13 @@ export const inRange = (n: number, min: number, max: number) => n >= min && n < 
 /** Scale a number <n> from range <inMin>-<inMax> to <outMin>-<outMax> presevring propertions */
 export const scaleRange = (n: number, inMin: number, inMax: number, outMin: number, outMax: number) => (n - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
 
+/** Clamp a number within a range */
+export const clamp = (min: number, max: number, n: number) => {
+  if (n < min) return min;
+  if (n > max) return max;
+  return n;
+};
+
 /** Linear interpolate dist% between min and max */
 export const lerp = (min: number, max: number, dist: number) => min + (max - min) * dist;
 

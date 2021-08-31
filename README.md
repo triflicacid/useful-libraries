@@ -20,6 +20,11 @@
 
 **Dependencies**: *None*
 
+# `Sound.ts`
+**About**: Classes for manipulating/managing sounds.
+
+**Dependencies**: `utils.ts`
+
 # `SQLiteDatabase.ts`
 **About**: A class which creates a connection to an SQLite database. Also provided each method as a raw function.
 
