@@ -35,6 +35,11 @@
 
 **Dependencies**: *None*
 
+# `Tabs.ts`
+**About**: A class which manages a tab controller
+
+**Dependencies**: *None*
+
 # `utils.ts`
 **About**: A collection of useful functions
 

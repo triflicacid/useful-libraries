@@ -67,3 +67,65 @@ export const polarToCartesian = (r: number, theta: number) => ([r * Math.cos(the
 
 /** Cartesian coordinates to polar coordinates => returns [radius, theta] */
 export const cartesianToPolar = (x: number, y: number) => ([Math.sqrt(x * x + y * y), Math.atan(x / y)]);
+
+/** Given an object, return new object with [key: value] and [value: key] */
+export function createEnum(object: object): object {
+  const enumeration = {};
+  for (let key in object)
+    if (object.hasOwnProperty(key)) {
+      enumeration[key] = object[key];
+      enumeration[object[key]] = key;
+    }
+  return enumeration;
+};
+
+/** Scroll to bottom of element */
+export const scrollToBottom = (el: HTMLElement) => el.scrollTop = el.scrollHeight;
+
+/** Split string into <nSize> groups  */
+export const groupString = (string: string, nSize: number): string[] => string.match(new RegExp(`.{1,${nSize}}`, 'g'));
+
+/** Read text from a File object */
+export async function readTextFile(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    let reader = new FileReader();
+    reader.onload = () => {
+      resolve(reader.result as string);
+    };
+    reader.onerror = reject;
+    reader.readAsText(file);
+  });
+}
+
+/** Download the given <text> in a file called <fname> */
+export function downloadTextFile(text: string, fname: string) {
+  let data = new Blob([text], { type: 'text/plain' });
+  let url = window.URL.createObjectURL(data);
+  downloadLink(url, fname);
+}
+
+/** Download the link <href> with name <fname> to client */
+export function downloadLink(href: string, fname: string) {
+  const a = document.createElement('a');
+  a.href = href;
+  a.setAttribute('download', fname);
+  a.click();
+  a.remove();
+}
+
+/** Try to remove child from parent, but doesn't throw error on failure. Instead, returns boolean success. */
+export function removeChild(parent: HTMLElement, child: HTMLElement): boolean {
+  try {
+    parent.removeChild(child);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Parse a HTML string and return as an element */
+export function parseHTML<T = HTMLElement>(html): T {
+  const div = document.createElement('div');
+  div.insertAdjacentHTML("beforeend", html);
+  return div.firstElementChild as any;
+}
