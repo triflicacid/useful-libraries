@@ -1,13 +1,19 @@
+export interface IButtonConfig {
+  text?: string;
+  title?: string;
+  classes?: string[];
+}
+
 export class FileUploader {
   private _btnContainer: HTMLElement;
   private _listContainer: HTMLElement;
   private _files = new Map<string, File>();
   private _reader: FileReader;
 
-  constructor(btnText = 'Upload Files') {
+  constructor(btnConfig: IButtonConfig = {}) {
     this._reader = new FileReader();
 
-    this._btnContainer = this._createBtnContainer(btnText);
+    this._btnContainer = this._createBtnContainer(btnConfig);
     this._listContainer = this._createListContainer();
   }
 
@@ -17,7 +23,7 @@ export class FileUploader {
     return container;
   }
 
-  private _createBtnContainer(btnText: string) {
+  private _createBtnContainer(btnConfig: IButtonConfig) {
     const btnContainer = document.createElement("div");
     btnContainer.classList.add('fileuploader-container');
     const input = document.createElement("input");
@@ -26,15 +32,19 @@ export class FileUploader {
     input.style.display = "none";
     input.multiple = true;
     input.addEventListener('input', e => {
-      for (let file of input.files) {
-        this.fadd(file.name, file);
+      if (input.files) {
+        for (let file of input.files) {
+          this.fadd(file.name, file);
+        }
+        input.value = ''; // Empty FileList
       }
     });
     btnContainer.appendChild(input);
     const label = document.createElement("label");
-    label.classList.add('fileuploader-upload', 'btn');
+    label.classList.add('fileuploader-upload', ...(btnConfig.classes ?? []));
     label.setAttribute('for', input.id);
-    label.innerText = btnText;
+    label.innerText = btnConfig.text ?? 'Upload Files';
+    if (btnConfig.title) label.title = btnConfig.title;
     btnContainer.appendChild(label);
     return btnContainer;
   }
@@ -83,7 +93,7 @@ export class FileUploader {
     if (!this._files.has(name)) throw new Error(`fread: file '${name}' could not be located`);
     return new Promise((resolve) => {
       this._reader.onload = () => void resolve(this._reader.result as string);
-      this._reader.readAsText(this._files.get(name), encoding);
+      this._reader.readAsText(this._files.get(name) as File, encoding);
     });
   }
 
@@ -92,7 +102,7 @@ export class FileUploader {
     if (!this._files.has(name)) throw new Error(`fread: file '${name}' could not be located`);
     return new Promise((resolve) => {
       this._reader.onload = () => void resolve(this._reader.result as ArrayBuffer);
-      this._reader.readAsArrayBuffer(this._files.get(name));
+      this._reader.readAsArrayBuffer(this._files.get(name) as File);
     });
   }
 
