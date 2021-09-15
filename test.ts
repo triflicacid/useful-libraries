@@ -1,14 +1,16 @@
-import { RCanv } from './libs/RCanv';
+import { FileUploader } from "./libs/FileUpload";
 
-var rcanv: RCanv;
+var fu: FileUploader;
 
 function main() {
-  rcanv = RCanv.create(600, 400);
-  document.body.appendChild(rcanv.getCanvas());
+  const btnContainer = document.createElement("div");
+  document.body.appendChild(btnContainer);
+  const listContainer = document.createElement("div");
+  document.body.appendChild(listContainer);
 
-  rcanv.fill("magenta");
-  rcanv.font.size = 37;
-  rcanv.text("Hello", rcanv.width / 2, rcanv.height / 2);
+  fu = new FileUploader();
+  fu.attach(btnContainer, listContainer);
+  globalThis.fu = fu;
 }
 
 window.addEventListener("load", main);

@@ -7,6 +7,11 @@
 
 **Dependencies**: *None*
 
+# `FileUploader.ts`
+**About**: A class for managing client side file uploads
+
+**Dependencies**: *None*
+
 # `Flags.ts`
 **About**: A class for generating Flags and a class for representing an inetger flag
 
