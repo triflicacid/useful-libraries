@@ -42,6 +42,11 @@
 
 **Dependencies**: `sqlite3` npm library
 
+# `SuperSet.ts`
+**About**: A virtual Set which can hold unlimited values (not bound to individual set limit (2**24))
+
+**Dependencies**: *None*
+
 # `Stack.ts`
 **About**: A class which implements the stack data structure
 
