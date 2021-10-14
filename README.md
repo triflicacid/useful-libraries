@@ -47,6 +47,11 @@
 
 **Dependencies**: *None*
 
+# `TableCreator.ts`
+**About**: Class which displays and allows editing of a HTML table using { col, row } object
+
+**Dependencies**: *None*
+
 # `Stack.ts`
 **About**: A class which implements the stack data structure
 

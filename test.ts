@@ -1,16 +1,23 @@
-import { FileUploader } from "./libs/FileUpload";
+import { TableCreator } from "./libs/TableCreator";
 
-var fu: FileUploader;
+var tc: TableCreator;
+
+document.head.insertAdjacentHTML('beforeend', '<style>table,tr,th,td{border:1px solid #000;}table{border-collapse:collapse;}</style>');
 
 function main() {
-  const btnContainer = document.createElement("div");
-  document.body.appendChild(btnContainer);
-  const listContainer = document.createElement("div");
-  document.body.appendChild(listContainer);
+  tc = new TableCreator();
+  globalThis.tc = tc;
 
-  fu = new FileUploader();
-  fu.attach(btnContainer, listContainer);
-  globalThis.fu = fu;
+  tc.fromObject({ c: ['Name', 'Age'], r: [['Ruben', 18], ['Angus', 17]] });
+
+  let div = document.createElement("div"), table;
+  document.body.appendChild(div);
+  function create() {
+    if (table) table.remove();
+    table = tc.toInteractiveHTML(create);
+    div.appendChild(table);
+  }
+  create();
 }
 
 window.addEventListener("load", main);
