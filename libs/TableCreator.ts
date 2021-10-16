@@ -122,6 +122,10 @@ export class TableCreator {
         this._cols = o.c;
     }
 
+    toCSV(seperator = ',') {
+        return this._cols.map(c => `"${c}"`).join(seperator) + '\n' + this._rows.map(row => row.map(r => `"${r}"`).join(seperator)).join('\n');
+    }
+
     /** Normalise data */
     fix() {
         TableCreator.fix(this._cols, this._rows);
@@ -137,5 +141,10 @@ export class TableCreator {
                 while (rows[i].length > ccount) rows[i].pop();
             }
         }
+    }
+
+    /** Generate empty ITableObject object */
+    static empty(): ITableObject {
+        return { c: [], r: [] };
     }
 }
