@@ -207,23 +207,25 @@ function parseString(string: string): { error: boolean, output: string; index: n
 /** Parse CSV */
 function parseCSV(input: string, seperator = ',') {
     const _sr = /\s/;
-    const lines = [];
-    input.split(/\r\n|\r|\n/g).forEach((row, ri) => {
+    const lines = [], rows = input.split(/\r\n|\r|\n/g);
+    if (rows[rows.length - 1]?.length === 0) rows.pop();
+    for (let ri = 0; ri < rows.length; ri++) {
+        const row = rows[ri];
         const items = [];
         for (let i = 0; i < row.length; i++) {
             if (_sr.test(row[i])) continue;
             if (row[i] === '"') {
-                const info = parseString(row.substr(++i));
+                const info = parseString(row.substr(i + 1));
                 if (info.error) throw new Error(`Error parsing CSV: cannot parse string at position ${i} in row ${ri}: "${row}"`);
                 items.push(info.output);
-                i = info.index + 2;
+                i += info.index + 2;
             } else {
                 let item = '';
-                while (row[i] !== undefined && !_sr.test(row[i]) && row[i] !== seperator) item += row[i++];
+                while (row[i] !== undefined && row[i] !== seperator) item += row[i++];
                 items.push(item);
             }
         }
         lines.push(items);
-    });
+    }
     return lines;
 }
