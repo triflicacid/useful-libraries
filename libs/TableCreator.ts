@@ -5,15 +5,17 @@ export interface ITableObject {
 
 export interface ITablePermissions {
     editHeaders: boolean;
+    deleteHeader: boolean;
     addHeader: boolean;
     editRows: boolean;
+    deleteRows: boolean;
     addRows: boolean;
 }
 
 /** Fill permissions object, setting all UNDEFINED values to TRUE/FALSE */
-export function completeTablePermissions(o: object, bool = true): ITablePermissions {
-    let keys = ["editHeaders", "addHeader", "editRows", "addRows"];
-    let permissions = {};
+export function completeTablePermissions(o: any, bool = true): ITablePermissions {
+    let keys = ["editHeaders", "addHeader", "deleteHeader", "editRows", "deleteRows", "addRows"];
+    let permissions: any = {};
     for (let key in o) if (o.hasOwnProperty(key)) permissions[key] = o[key];
     keys.forEach(key => permissions[key] === undefined && (permissions[key] = bool));
     return permissions as ITablePermissions;
@@ -56,12 +58,25 @@ export class TableCreator {
                     this._cols[i] = input.value;
                     onUpdate(this);
                 });
+                if (permissions?.deleteHeader) {
+                    const btn = document.createElement('button');
+                    btn.classList.add(...this.buttonClasses);
+                    btn.innerHTML = '&times;';
+                    btn.title = 'Delete Column';
+                    btn.addEventListener('click', () => {
+                        this._cols.splice(i, 1);
+                        this.fix();
+                        onUpdate(this);
+                    });
+                    th.appendChild(btn);
+                }
             });
             if (permissions.addHeader) {
                 const th = document.createElement('th'), btn = document.createElement('button');
                 tr.appendChild(th);
                 th.appendChild(btn);
                 btn.classList.add(...this.buttonClasses);
+                btn.title = 'Add Column';
                 btn.innerHTML = '&plus;';
                 btn.addEventListener('click', () => {
                     this._cols.push('NewCol');
@@ -89,6 +104,20 @@ export class TableCreator {
                         onUpdate(this);
                     })
                 });
+                let td = document.createElement('td');
+                tr.appendChild(td);
+                if (permissions?.deleteRows) {
+                    let btn = document.createElement('button');
+                    td.appendChild(btn);
+                    btn.classList.add(...this.buttonClasses);
+                    btn.innerHTML = '&times;';
+                    btn.title = 'Remove Row';
+                    btn.addEventListener('click', () => {
+                        this._rows.splice(ri, 1);
+                        tr.remove();
+                        onUpdate(this);
+                    });
+                }
                 tbody.appendChild(tr);
             });
         } else {
@@ -102,6 +131,7 @@ export class TableCreator {
             td.appendChild(btn);
             td.colSpan = this._cols.length + 1;
             btn.innerHTML = '&plus; Add Row';
+            btn.title = 'Add Row';
             btn.classList.add(...this.buttonClasses);
             btn.addEventListener('click', () => {
                 this._rows.push(Array.from({ length: this._cols.length }, () => ''));
@@ -113,6 +143,7 @@ export class TableCreator {
     }
 
     toObject(): ITableObject {
+        this.fix();
         return { r: this._rows, c: this._cols };
     }
 
@@ -124,6 +155,12 @@ export class TableCreator {
 
     toCSV(seperator = ',') {
         return this._cols.map(c => `"${c}"`).join(seperator) + '\n' + this._rows.map(row => row.map(r => `"${r}"`).join(seperator)).join('\n');
+    }
+
+    fromCSV(csv: string, seperator = ',') {
+        const lines = parseCSV(csv, seperator);
+        this._cols = lines[0];
+        this._rows = lines.slice(1);
     }
 
     /** Normalise data */
@@ -147,4 +184,46 @@ export class TableCreator {
     static empty(): ITableObject {
         return { c: [], r: [] };
     }
+}
+
+/** Parse string to CLOSING " (assume opening " was already met at index before 0) (allow escape characters) */
+function parseString(string: string): { error: boolean, output: string; index: number } {
+    const obj = { error: true, output: '', index: 0 };
+    for (obj.index = 0; obj.index < string.length; obj.index++) {
+        if (string[obj.index] === '\\') {
+            obj.output += string[++obj.index];
+        } else {
+            if (string[obj.index] === '"') {
+                obj.error = false;
+                break;
+            } else {
+                obj.output += string[obj.index];
+            }
+        }
+    }
+    return obj;
+}
+
+/** Parse CSV */
+function parseCSV(input: string, seperator = ',') {
+    const _sr = /\s/;
+    const lines = [];
+    input.split(/\r\n|\r|\n/g).forEach((row, ri) => {
+        const items = [];
+        for (let i = 0; i < row.length; i++) {
+            if (_sr.test(row[i])) continue;
+            if (row[i] === '"') {
+                const info = parseString(row.substr(++i));
+                if (info.error) throw new Error(`Error parsing CSV: cannot parse string at position ${i} in row ${ri}: "${row}"`);
+                items.push(info.output);
+                i = info.index + 2;
+            } else {
+                let item = '';
+                while (row[i] !== undefined && !_sr.test(row[i]) && row[i] !== seperator) item += row[i++];
+                items.push(item);
+            }
+        }
+        lines.push(items);
+    });
+    return lines;
 }

@@ -8,7 +8,8 @@ function main() {
   tc = new TableCreator();
   globalThis.tc = tc;
 
-  tc.fromObject({ c: ['Name', 'Age'], r: [['Ruben', 18], ['Angus', 17]] });
+  // tc.fromObject({ c: ['Name', 'Age'], r: [['Ruben', 18], ['Angus', 17]] });
+  tc.fromCSV(`Name,Age\n"Ruben S",18\nAngus,17`);
 
   let div = document.createElement("div"), table;
   document.body.appendChild(div);
