@@ -25,7 +25,12 @@
 # `Piechart.ts`
 **About**: A class to create a Piechart
 
+# `Popup.ts`
+**About**: A class to create popups which may be resused.
+
 **Dependencies**: *None*
+
+**Note** example styling is available in `Popup.css`
 
 # `RCanv.ts`
 **About**: A class which managed drawing to a canvas

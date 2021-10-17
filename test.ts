@@ -1,24 +1,12 @@
-import { TableCreator } from "./libs/TableCreator";
-
-var tc: TableCreator;
-
-document.head.insertAdjacentHTML('beforeend', '<style>table,tr,th,td{border:1px solid #000;}table{border-collapse:collapse;}</style>');
+import Popup from "./libs/Popup";
 
 function main() {
-  tc = new TableCreator();
-  globalThis.tc = tc;
-
-  // tc.fromObject({ c: ['Name', 'Age'], r: [['Ruben', 18], ['Angus', 17]] });
-  tc.fromCSV(`Name,Age\n"Ruben S",18\nAngus,17`);
-
-  let div = document.createElement("div"), table;
-  document.body.appendChild(div);
-  function create() {
-    if (table) table.remove();
-    table = tc.toInteractiveHTML(create);
-    div.appendChild(table);
-  }
-  create();
+  let popup = new Popup('Example Popup');
+  popup.insertAdjacentHTML('beforeend', `<p style='color: red'>The current time is ${new Date()}</p>`);
+  popup.show();
+  popup.setCloseCallback(() => {
+    console.log("On Close!");
+  })
 }
 
 window.addEventListener("load", main);
