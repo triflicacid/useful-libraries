@@ -1,12 +1,7 @@
-import Popup from "./libs/Popup";
+import { parseNumber } from "./libs/utils";
 
 function main() {
-  let popup = new Popup('Example Popup');
-  popup.insertAdjacentHTML('beforeend', `<p style='color: red'>The current time is ${new Date()}</p>`);
-  popup.show();
-  popup.setCloseCallback(() => {
-    console.log("On Close!");
-  })
+  console.log(parseNumber("-18", { signed: false }));
 }
 
 window.addEventListener("load", main);
