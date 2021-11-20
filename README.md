@@ -7,6 +7,11 @@
 
 **Dependencies**: *None*
 
+# `Expression.ts`
+**About**: A class for parsing and evaluating numerical expressions
+
+**Dependencies**: `utils::parseNumber`
+
 # `FileUploader.ts`
 **About**: A class for managing client side file uploads
 

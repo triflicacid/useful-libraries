@@ -325,3 +325,15 @@ export function parseNumber(string: string, opts: IParseNumberOptions = {}) {
   }
   return { pos, str: string.substring(0, pos), sign, base, exp, radix, num };
 }
+
+/** Parse caracter literal (assume literal is enclosed in '<literal>') */
+export function parseCharLit(literal: string): string {
+  if (literal[0] === '\\') {
+    let obj = decodeEscapeSequence(literal, 1);
+    if (obj.pos !== literal.length) throw new Error(`Character literal too large`);
+    return obj.char;
+  } else {
+    if (literal.length !== 1) throw new Error(`Character literal too large`);
+    return literal[0];
+  }
+}

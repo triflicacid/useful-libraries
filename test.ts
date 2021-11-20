@@ -1,7 +1,10 @@
-import { parseNumber } from "./libs/utils";
+import { Expression } from "./libs/Expression";
 
 function main() {
-  console.log(parseNumber("-18", { signed: false }));
+  let obj = new Expression();
+  obj.load('2 ** 3 ** 4');
+  obj.parse();
+  console.log(obj.evaluate());
 }
 
 window.addEventListener("load", main);
