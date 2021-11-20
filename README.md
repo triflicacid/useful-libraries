@@ -7,6 +7,11 @@
 
 **Dependencies**: *None*
 
+# `Console.ts`
+**About**: Generates a HTML console
+
+**Dependencies**: *None*
+
 # `Expression.ts`
 **About**: A class for parsing and evaluating numerical expressions
 
@@ -41,6 +46,11 @@
 **About**: A class which managed drawing to a canvas
 
 **Dependencies**: `Font.ts`, `utils.ts`
+
+# `Screen.ts`
+**About**: An HTML canvas which acts as a screen
+
+**Dependencies**: *None*
 
 # `Sound.ts`
 **About**: Classes for manipulating/managing sounds.
