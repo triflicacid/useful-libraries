@@ -1,4 +1,4 @@
-import CustomScreen, { ITextMeasurements } from "./Screen";
+import CustomScreen, { ITextMeasurements, withinState } from "./Screen";
 import { clamp, downloadBlob, downloadTextFile, readBinaryFile } from "./utils";
 
 export interface IMemoryViewCache {
@@ -19,6 +19,8 @@ export class MemoryView {
   private _base = 16;
   private _cache: IMemoryViewCache;
   private _startAddr = 0;
+
+  public colorAddresses = new Map<number, string>();
 
   constructor(wrapper: HTMLDivElement, dataView: DataView) {
     this.screen = new CustomScreen(wrapper);
@@ -116,14 +118,20 @@ export class MemoryView {
     // Address values
     for (let col = 0, addr = this._startAddr; col < this._cols; col++) {
       for (let row = 0; row < this._rows; row++, addr++) {
-        let text: string, value: number;
         if (addr >= 0 && addr < D.byteLength) {
-          value = D.getUint8(addr);
-          text = value.toString(this.base).padStart(maxLength, '0');
+          let value = D.getUint8(addr);
+          let text = value.toString(this.base).padStart(maxLength, '0');
+          if (this.colorAddresses.has(addr)) {
+            withinState(this.screen, S => {
+              S.setForeground(this.colorAddresses.get(addr));
+              S.writeString(text, false);
+            });
+          } else {
+            S.writeString(text, false);
+          }
         } else {
-          text = '-';
+          S.writeString('-', false);
         }
-        S.writeString(text, false);
         S.x += this._cache.xSpacing;
       }
       S.y += this._cache.ySpacing;
@@ -141,10 +149,21 @@ export class MemoryView {
     this.screen.x = x;
     this.screen.y = y;
 
-    const value = this._data.getUint8(address);
-    const maxLength = (255).toString(this._base).length;
-    let text = value.toString(this.base).padStart(maxLength, '0');
-    this.screen.writeString(text, false);
+    if (relAddress >= 0 && relAddress < this.length) {
+      const value = this._data.getUint8(address);
+      const maxLength = (255).toString(this._base).length;
+      let text = value.toString(this.base).padStart(maxLength, '0');
+      if (this.colorAddresses.has(address)) {
+        withinState(this.screen, S => {
+          S.setForeground(this.colorAddresses.get(address));
+          S.writeString(text, false);
+        });
+      } else {
+        this.screen.writeString(text, false);
+      }
+    } else {
+      this.screen.writeString('-', false);
+    }
   }
 
   /** Update given address in MemortView. If not provided, everything will be updated */
@@ -157,6 +176,15 @@ export class MemoryView {
   }
 }
 
+export interface IControlOptions {
+  wrapper: HTMLDivElement;
+  dataView: DataView;
+  onupdate?: (dataView: DataView) => void
+  editable?: boolean;
+  resizable?: boolean;
+  colorCurrent?: string;
+}
+
 export interface IControlReturnData {
   wrapper: HTMLDivElement;
   dataView: DataView;
@@ -164,19 +192,12 @@ export interface IControlReturnData {
   updateGUI: () => void;
 }
 
-export interface IControlOptions {
-  wrapper: HTMLDivElement;
-  dataView: DataView;
-  onupdate?: (dataView: DataView) => void
-  editable?: boolean;
-  resizable?: boolean;
-}
-
 /** HTML template a controls for MemoryView */
 export function generateControl(options: IControlOptions) {
   options.editable ??= true;
   options.resizable ??= true;
   options.onupdate ??= d => void 0;
+  options.colorCurrent ??= 'yellow';
 
   const viewDiv = document.createElement("div");
   const view = new MemoryView(viewDiv, options.dataView);
@@ -191,7 +212,9 @@ export function generateControl(options: IControlOptions) {
     if (isNaN(addr)) {
       inputtedAddress(0);
     } else {
+      view.colorAddresses.delete(addressViewing);
       addressViewing = addr;
+      view.colorAddresses.set(addressViewing, options.colorCurrent);
       if (addr >= 0 && addr < view.length) {
         const decimal = DATA.dataView.getUint8(addr);
         inputAddressValue.value = decimal.toString();
@@ -205,7 +228,10 @@ export function generateControl(options: IControlOptions) {
   inputAddress.type = "number";
   inputAddress.value = "0";
   inputAddress.min = "0";
-  inputAddress.addEventListener('change', () => inputtedAddress(inputAddress.value));
+  inputAddress.addEventListener('change', () => {
+    inputtedAddress(inputAddress.value);
+    view.update();
+  });
   p.appendChild(inputAddress);
   p.insertAdjacentHTML('beforeend', ' &equals; ');
   let inputAddressValue = document.createElement("input");
@@ -290,13 +316,15 @@ export function generateControl(options: IControlOptions) {
     const range = `${min.toString(view.base).padStart(pad, '0')} - ${max.toString(view.base).padStart(pad, '0')}`;
     addressRange.innerText = range;
     inputAddress.max = view.length.toString();
+    view.colorAddresses.delete(addressViewing);
     addressViewing = clamp(0, view.length, addressViewing);
+    view.colorAddresses.set(addressViewing, options.colorCurrent);
     btnEnd.innerText = view.length.toString(view.base);
     inputAddress.value = addressViewing.toString();
     inputtedAddress(addressViewing);
     inputSize.value = view.length.toString();
     if (options.editable) {
-      btnSetInRange.innerText = 'Set ' + range;
+      btnSetInRange.innerText = range;
     }
 
     // Limiting buttons
@@ -334,9 +362,9 @@ export function generateControl(options: IControlOptions) {
   });
 
   // Set memory in range/all
-  let btnSetInRange: HTMLButtonElement, btnSetAll: HTMLButtonElement, inputSetValue: HTMLInputElement;
+  let btnSetInRange: HTMLButtonElement, btnSetAll: HTMLButtonElement, btnSetInputRange: HTMLButtonElement, inputSetValue: HTMLInputElement;
   if (options.editable) {
-    p.insertAdjacentHTML('beforeend', ' &nbsp;&nbsp; | &nbsp;&nbsp; ');
+    p.insertAdjacentHTML('beforeend', ' &nbsp;&nbsp; | &nbsp;&nbsp; Set ');
     btnSetInRange = document.createElement("button");
     btnSetInRange.addEventListener('click', () => {
       let [min, max] = view.getAddressRange();
@@ -352,7 +380,7 @@ export function generateControl(options: IControlOptions) {
     });
     p.appendChild(btnSetInRange);
     btnSetAll = document.createElement("button");
-    btnSetAll.innerText = 'Set All';
+    btnSetAll.innerText = 'All';
     btnSetAll.addEventListener('click', () => {
       const number = +inputSetValue.value;
       for (let i = 0; i < DATA.dataView.byteLength; ++i) {
@@ -363,6 +391,28 @@ export function generateControl(options: IControlOptions) {
       options.onupdate(DATA.dataView);
     });
     p.appendChild(btnSetAll);
+    btnSetInputRange = document.createElement("button");
+    btnSetInputRange.innerText = 'Range';
+    btnSetInputRange.addEventListener('click', () => {
+      let range = view.getAddressRange(), rangeInput = prompt(`Range of addresses to set`, range.join(', '));
+      if (rangeInput === null) return;
+      if (rangeInput) {
+        let parsed = rangeInput.split(',').map(n => parseInt(n));
+        range[0] = parsed[0];
+        range[1] = parsed[1];
+        if (parsed.length !== 2 || range[0] > range[1] || range[0] < 0 || range[1] > view.length) return alert(`Invalid range.`);
+      }
+      const number = +inputSetValue.value;
+      for (let i = range[0]; i < range[1]; ++i) {
+        DATA.dataView.setUint8(i, number);
+      }
+      view.colorAddresses.delete(addressViewing);
+      addressViewing = range[0];
+      updateGUI();
+      view.update();
+      options.onupdate(DATA.dataView);
+    });
+    p.appendChild(btnSetInputRange);
     p.insertAdjacentHTML('beforeend', ' &nbsp;to ');
     inputSetValue = document.createElement("input");
     inputSetValue.type = "number";
