@@ -75,7 +75,7 @@ export class CustomScreen {
   public setPadding(value: number): CustomScreen { this._padding = value; return this; }
 
   /** Write string to screen. Move cursor position to end of string? */
-  writeString(string: string, moveCursorPos = true, maxWidth?: number) {
+  public writeString(string: string, moveCursorPos = true, maxWidth?: number) {
     const ctx = this._ctx, metrics = getTextMetrics(ctx, string);
     // Fill background
     if (this._background !== null) {

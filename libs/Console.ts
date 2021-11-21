@@ -1,3 +1,5 @@
+export const scrollToBottom = (el: HTMLElement) => el.scrollTop = el.scrollHeight;
+
 export type ConsoleCallback = (value: string, ioconsole: IOConsole) => void;
 
 export class IOConsole {

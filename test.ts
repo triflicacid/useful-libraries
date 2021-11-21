@@ -1,10 +1,16 @@
-import { Expression } from "./libs/Expression";
+import { generateControl, MemoryView } from "./libs/MemoryView";
 
 function main() {
-  let obj = new Expression();
-  obj.load('2 ** 3 ** 4');
-  obj.parse();
-  console.log(obj.evaluate());
+  const wrapper = document.createElement("div");
+  document.body.appendChild(wrapper);
+
+  const buffer = new ArrayBuffer(250), dataView = new DataView(buffer);
+  const DATA = generateControl({ wrapper, dataView });
+  window.DATA = DATA;
+  DATA.view.updateScreen(S => {
+    S.setWidth(1000);
+    S.setHeight(600);
+  });
 }
 
 window.addEventListener("load", main);

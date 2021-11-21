@@ -32,8 +32,15 @@
 
 **Dependencies**: *None*
 
+# `MemoryView.ts`
+**About**: Generates a HTML canvas for a view into a DataView. Also provides a function to generate a full HTML control.
+
+**Dependencies**: `Screen.ts`, `utils.ts`
+
 # `Piechart.ts`
 **About**: A class to create a Piechart
+
+**Dependencies**: *None*
 
 # `Popup.ts`
 **About**: A class to create popups which may be resused.

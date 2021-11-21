@@ -97,12 +97,29 @@ export async function readTextFile(file: File): Promise<string> {
   });
 }
 
+export async function readBinaryFile(file: File): Promise<ArrayBuffer> {
+  return new Promise((resolve, reject) => {
+    let reader = new FileReader();
+    reader.onload = () => {
+      resolve(reader.result as ArrayBuffer);
+    };
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
+
 /** Download the given <text> in a file called <fname> */
 export function downloadTextFile(text: string, fname: string) {
   let data = new Blob([text], { type: 'text/plain' });
   let url = window.URL.createObjectURL(data);
   downloadLink(url, fname);
 }
+
+export function downloadBlob(data: any, filename: string, mimeType: string) {
+  let blob = new Blob([data], { type: mimeType });
+  let url = window.URL.createObjectURL(blob);
+  downloadLink(url, filename);
+};
 
 /** Download the link <href> with name <fname> to client */
 export function downloadLink(href: string, fname: string) {
