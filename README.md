@@ -12,6 +12,11 @@
 
 **Dependencies**: *None*
 
+# `Complex.ts`
+**About**: Represent a complex number
+
+**Dependencies**: *None*
+
 # `Expression.ts`
 **About**: A class for parsing and evaluating numerical expressions
 

@@ -1,16 +1,9 @@
-import { generateControl, MemoryView } from "./libs/MemoryView";
+import { Complex } from "./libs/Complex";
 
 function main() {
-  const wrapper = document.createElement("div");
-  document.body.appendChild(wrapper);
-
-  const buffer = new ArrayBuffer(250), dataView = new DataView(buffer);
-  const DATA = generateControl({ wrapper, dataView });
-  window.DATA = DATA;
-  DATA.view.updateScreen(S => {
-    S.setWidth(1000);
-    S.setHeight(600);
-  });
+  const a = new Complex(1, 2);
+  const b = new Complex(5, -10);
+  console.log(Complex.logab(a, b).toString());
 }
 
 window.addEventListener("load", main);
