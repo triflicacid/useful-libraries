@@ -37,6 +37,11 @@
 
 **Dependencies**: *None*
 
+# `Matrix.ts`
+**About**: Represent a matrix of complex numbers
+
+**Dependencies**: `Complex.ts`
+
 # `MemoryView.ts`
 **About**: Generates a HTML canvas for a view into a DataView. Also provides a function to generate a full HTML control.
 
