@@ -1,4 +1,4 @@
-import { parseNumber } from "./utils";
+import { parseNumber } from "../utils";
 
 interface IToken {
   type: number;

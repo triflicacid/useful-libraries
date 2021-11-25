@@ -37,6 +37,11 @@ export class Complex {
     return this;
   }
 
+  /** Return negation of this number. Return -a - bi */
+  public neg() {
+    return new Complex(-this.a, -this.b);
+  }
+
   /** Multiply by a complex number : this = this * z */
   public mult(z_: any) {
     const z = Complex.parse(z_);
@@ -351,7 +356,7 @@ export class Complex {
     return isFinite(z.a) && isFinite(z.b);
   }
 
-  /** Calculate Math.abs() of a complex number - magnitude */
+  /** Calculatemagnitude o a complex number */
   public static abs(z_: any) {
     return Complex.parse(z_).getMag();
   }
@@ -404,6 +409,9 @@ export class Complex {
 
   /** Return not-a-number */
   public static get NaN() { return new Complex(NaN, NaN); }
+
+  /** Return infinity */
+  public static get Inf() { return new Complex(Infinity, Infinity); }
 
   /** Attemot to parse argument to a complex number */
   public static parse(z: any) {
