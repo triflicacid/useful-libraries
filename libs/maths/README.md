@@ -25,4 +25,9 @@ This directory contains useful programs for maths-based activities.
 # `Matrix.ts`
 **About**: Represent a matrix of complex numbers
 
-**Dependencies**: `Complex.ts`, ``
+**Dependencies**: `Complex.ts`
+
+# `wright-omega.ts`
+**About**: Return function `ω(z)` such that `w + log(w) = z`
+
+**Dependencies**: `Complex.ts`, `constants.ts`

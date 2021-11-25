@@ -16,6 +16,14 @@ export class Complex {
     this.b = +b;
   }
 
+  /** Set oneself to value of argument */
+  public set(z_: any) {
+    const z = Complex.parse(z_);
+    this.a = z.a;
+    this.b = z.b;
+    return this;
+  }
+
   /** Do we only have a real component? */
   public isReal() {
     return this.b === 0;

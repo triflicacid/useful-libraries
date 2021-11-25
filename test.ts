@@ -1,9 +1,7 @@
-import { Complex } from "./libs/Complex";
+import { Complex } from "./libs/maths/Complex";
 
 function main() {
-  const a = new Complex(1, 2);
-  const b = new Complex(5, -10);
-  console.log(Complex.logab(a, b).toString());
+  console.log(Complex.Inf.equals(Complex.Inf));
 }
 
 window.addEventListener("load", main);
