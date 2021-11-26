@@ -2,6 +2,11 @@
 
 These a general useful programs.
 
+# `BitArray.ts`
+**About**: A class for efficiently representing a bit/boolean array
+
+**Dependencies**: *None*
+
 # `Blocker.ts`
 **About**: A class for blocking code using Promises
 

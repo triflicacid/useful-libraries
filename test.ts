@@ -1,7 +1,8 @@
-import { Complex } from "./libs/maths/Complex";
+import { BitArray } from "./libs/BitArray";
 
 function main() {
-  console.log(Complex.Inf.equals(Complex.Inf));
+  const arr = new BitArray([1, 0, 1, 1]);
+  window.arr = arr;
 }
 
 window.addEventListener("load", main);
