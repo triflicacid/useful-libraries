@@ -354,3 +354,10 @@ export function parseCharLit(literal: string): string {
     return literal[0];
   }
 }
+
+/** Sleep for <ms> milliseconds. Resolve with <ms>. */
+export async function sleep(ms: number): Promise<number> {
+  return new Promise(res => {
+    setTimeout(() => res(ms), ms);
+  });
+}

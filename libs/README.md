@@ -59,6 +59,11 @@ These a general useful programs.
 
 **Dependencies**: *None*
 
+# `SegmentDisplay.ts`
+**About**: Class which displays a 7-segment display on a canvas. SUpports digits 0-F
+
+**Dependencies**: *None*
+
 # `Sound.ts`
 **About**: Classes for manipulating/managing sounds.
 
