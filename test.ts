@@ -1,5 +1,4 @@
-import { SegmentDisplay } from "./libs/SegmentDisplay";
-import { sleep } from "./libs/utils";
+import { roundedRect } from "./libs/canvasUtils";
 
 function main() {
   var canvas = document.createElement('canvas');
@@ -9,22 +8,12 @@ function main() {
   document.body.appendChild(canvas);
   var ctx = canvas.getContext('2d');
 
-  var seg = new SegmentDisplay(300, 300);
-
-  (async function () {
-    let n = 0, t = 250;
-    while (true) {
-      seg.value = n;
-      seg.display(ctx);
-      await sleep(t);
-      n++;
-      if (n > 15) {
-        await sleep(2 * t);
-        n = 0;
-      }
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
-  })();
+  roundedRect(ctx, 40, 40, 100, 100, 10, 20, 30, 40);
+  ctx.strokeStyle = "purple";
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  ctx.fillStyle = 'violet';
+  ctx.fill();
 }
 
 window.addEventListener("load", main);
