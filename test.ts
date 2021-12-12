@@ -1,7 +1,16 @@
-import { Complex } from "./libs/maths/Complex";
+import { generateControl } from "./libs/MemoryView";
 
 function main() {
-  console.log(Complex.Inf.equals(Complex.Inf));
+  const wrapper = document.createElement("div");
+  document.body.appendChild(wrapper);
+
+  const buffer = new ArrayBuffer(250), dataView = new DataView(buffer);
+  const DATA = generateControl({ wrapper, dataView });
+  globalThis.DATA = DATA;
+  DATA.view.updateScreen(S => {
+    S.setWidth(1000);
+    S.setHeight(600);
+  });
 }
 
-window.addEventListener("load", main);
+globalThis.addEventListener("load", main);

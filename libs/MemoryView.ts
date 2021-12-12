@@ -17,6 +17,8 @@ export class MemoryView {
   private _rows = 20;
   private _cols = 20;
   private _base = 16;
+  private _text = new TextDecoder("utf8");
+  public displayText = false;
   private _cache: IMemoryViewCache;
   private _startAddr = 0;
 
@@ -48,6 +50,9 @@ export class MemoryView {
   public get base(): number { return this._base; }
   public set base(value: number) { this._base = value; this._updateCache(); this._render(); }
 
+  public get text(): string { return this._text.encoding; }
+  public set text(value: string) { this._text = new TextDecoder(value); this._updateCache(); this._render(); }
+
   /** Change data view */
   public setDataView(dataView: DataView) {
     this._data = dataView;
@@ -75,6 +80,11 @@ export class MemoryView {
 
     const cache: IMemoryViewCache = { ySpacing, offsetLabelsLength, offsetLabelsDimensions, rowTitleWidth, xSpacing, xPad };
     this._cache = cache;
+  }
+
+  /** Number to text */
+  private _textDecode(n: number) {
+    return n > 0x1F ? this._text.decode(new Uint8Array([n])) : ".";
   }
 
   /** Render headers and all addresses on current page */
@@ -120,7 +130,7 @@ export class MemoryView {
       for (let row = 0; row < this._rows; row++, addr++) {
         if (addr >= 0 && addr < D.byteLength) {
           let value = D.getUint8(addr);
-          let text = value.toString(this.base).padStart(maxLength, '0');
+          let text = this.displayText ? this._textDecode(value) : value.toString(this.base).padStart(maxLength, '0');
           if (this.colorAddresses.has(addr)) {
             withinState(this.screen, S => {
               S.setForeground(this.colorAddresses.get(addr));
@@ -152,7 +162,7 @@ export class MemoryView {
     if (relAddress >= 0 && relAddress < this.length) {
       const value = this._data.getUint8(address);
       const maxLength = (255).toString(this._base).length;
-      let text = value.toString(this.base).padStart(maxLength, '0');
+      let text = this.displayText ? this._textDecode(value) : value.toString(this.base).padStart(maxLength, '0');
       if (this.colorAddresses.has(address)) {
         withinState(this.screen, S => {
           S.setForeground(this.colorAddresses.get(address));
@@ -236,6 +246,11 @@ export function generateControl(options: IControlOptions) {
   p.insertAdjacentHTML('beforeend', ' &equals; ');
   let inputAddressValue = document.createElement("input");
   inputAddressValue.type = "number";
+  inputAddressValue.addEventListener('keyup', e => {
+    if (e.key === " " || (e.key.length === 1 && isNaN(+e.key))) {
+      inputAddressValue.value = e.key.charCodeAt(0).toString();
+    }
+  });
   inputAddressValue.addEventListener('change', () => {
     // Write to address
     const decimal = +inputAddressValue.value;
@@ -278,6 +293,51 @@ export function generateControl(options: IControlOptions) {
     inputSize.readOnly = true;
   }
   p.appendChild(inputSize);
+
+  // Display
+  p.insertAdjacentHTML("beforeend", "&nbsp; | Display: ");
+  let displayBaseRadio = document.createElement("input");
+  const displayName = "display-" + Math.random().toString() + Math.random().toString();
+  displayBaseRadio.type = "radio";
+  displayBaseRadio.name = displayName;
+  displayBaseRadio.checked = true;
+  displayBaseRadio.addEventListener("change", () => {
+    view.displayText = !displayBaseRadio.checked;
+    view.update();
+  });
+  p.appendChild(displayBaseRadio);
+  p.insertAdjacentHTML("beforeend", " Base ");
+  let displayBaseSelect = document.createElement("select");
+  displayBaseSelect.value = view.base.toString();
+  for (let b = 2; b <= 36; b++) displayBaseSelect.insertAdjacentHTML("beforeend", `<option value='${b}'${b === view.base ? ' selected' : ''}>${b}</option>`);
+  displayBaseSelect.addEventListener("change", () => {
+    view.base = parseInt(displayBaseSelect.value);
+    options.onupdate(DATA.dataView);
+    view.update();
+  });
+  p.appendChild(displayBaseSelect);
+  let displayTextRadio = document.createElement("input");
+  displayTextRadio.type = "radio";
+  displayTextRadio.name = displayName;
+  if (view.displayText) displayTextRadio.checked = true;
+  displayTextRadio.addEventListener("change", () => {
+    view.displayText = displayTextRadio.checked;
+    view.update();
+  });
+  p.appendChild(displayTextRadio);
+  p.insertAdjacentHTML("beforeend", " Text ");
+  let displayTextInput = document.createElement("input");
+  displayTextInput.value = view.text;
+  displayTextInput.addEventListener("change", () => {
+    try {
+      view.text = displayTextInput.value;
+      view.update();
+    } catch (e) {
+      displayTextInput.value = view.text ?? '';
+      alert(`Unable to view as text '${displayTextInput.value}'`);
+    }
+  });
+  p.appendChild(displayTextInput);
 
   /// Buttons
   p = document.createElement("p");
@@ -400,11 +460,17 @@ export function generateControl(options: IControlOptions) {
         let parsed = rangeInput.split(',').map(n => parseInt(n));
         range[0] = parsed[0];
         range[1] = parsed[1];
-        if (parsed.length !== 2 || range[0] > range[1] || range[0] < 0 || range[1] > view.length) return alert(`Invalid range.`);
+        if (parsed.length !== 2 || range[0] > range[1] || range[0] < 0 || range[1] > view.length + 1) return alert(`Invalid range.`);
       }
-      const number = +inputSetValue.value;
-      for (let i = range[0]; i < range[1]; ++i) {
-        DATA.dataView.setUint8(i, number);
+      if (checkboxFillRandom.checked) {
+        for (let i = range[0]; i < range[1]; ++i) {
+          DATA.dataView.setUint8(i, Math.floor(Math.random() * 255));
+        }
+      } else {
+        const number = +inputSetValue.value;
+        for (let i = range[0]; i < range[1]; ++i) {
+          DATA.dataView.setUint8(i, number);
+        }
       }
       view.colorAddresses.delete(addressViewing);
       addressViewing = range[0];
@@ -417,6 +483,11 @@ export function generateControl(options: IControlOptions) {
     inputSetValue = document.createElement("input");
     inputSetValue.type = "number";
     inputSetValue.value = "0";
+    inputSetValue.addEventListener('keyup', e => {
+      if (e.key.length === 1 && isNaN(+e.key)) {
+        inputSetValue.value = e.key.charCodeAt(0).toString();
+      }
+    });
     inputSetValue.addEventListener('change', () => {
       let value = +inputSetValue.value;
       if (isNaN(value) || !isFinite(value)) {
@@ -426,6 +497,13 @@ export function generateControl(options: IControlOptions) {
       }
     })
     p.appendChild(inputSetValue);
+    let checkboxFillRandom = document.createElement("input");
+    checkboxFillRandom.type = "checkbox";
+    checkboxFillRandom.addEventListener('change', () => {
+      inputSetValue.disabled = checkboxFillRandom.checked;
+    });
+    p.appendChild(checkboxFillRandom);
+    p.insertAdjacentHTML("beforeend", " <abbr title='Fill range with random bytes'>Random</abbr>");
   }
 
   // Append MemoryViewer to screen
