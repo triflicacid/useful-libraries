@@ -34,6 +34,8 @@ These a general useful programs.
 
 # `MemoryView.ts`
 **About**: Generates a HTML canvas for a view into a DataView. Also provides a function to generate a full HTML control.
+The control provides functionality to edit, fill, download and upload binary files. It also comes with the option for keyboard control.
+For this, focus must be on the div. Arrows will change move the edit cursor. Pressing [0-9a-f] hex key will edit the most-significant nibble then the least-significant nibble.
 
 **Dependencies**: `Screen.ts`, `utils.ts`
 

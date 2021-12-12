@@ -193,6 +193,7 @@ export interface IControlOptions {
   editable?: boolean;
   resizable?: boolean;
   colorCurrent?: string;
+  keyboardControl?: boolean;
 }
 
 export interface IControlReturnData {
@@ -200,6 +201,7 @@ export interface IControlReturnData {
   dataView: DataView;
   view: MemoryView;
   updateGUI: () => void;
+  remove: () => void;
 }
 
 /** HTML template a controls for MemoryView */
@@ -208,10 +210,18 @@ export function generateControl(options: IControlOptions) {
   options.resizable ??= true;
   options.onupdate ??= d => void 0;
   options.colorCurrent ??= 'yellow';
+  options.keyboardControl ??= true;
 
   const viewDiv = document.createElement("div");
   const view = new MemoryView(viewDiv, options.dataView);
-  const DATA = { wrapper: options.wrapper, view, dataView: options.dataView, updateGUI } as IControlReturnData;
+  var eventMap: Map<keyof HTMLElementEventMap, (ev: Event) => any> = new Map();
+  function remove() {
+    eventMap.forEach((handle, type) => viewDiv.removeEventListener(type, handle));
+    viewDiv.remove();
+    options.wrapper.remove();
+    for (let key in DATA) delete DATA[key];
+  }
+  const DATA = { wrapper: options.wrapper, view, dataView: options.dataView, updateGUI, remove } as IControlReturnData;
 
   /// Edit memory
   let p = document.createElement("p"), addressViewing: number;
@@ -238,9 +248,10 @@ export function generateControl(options: IControlOptions) {
   inputAddress.type = "number";
   inputAddress.value = "0";
   inputAddress.min = "0";
-  inputAddress.addEventListener('change', () => {
+  inputAddress.addEventListener('change', e => {
     inputtedAddress(inputAddress.value);
     view.update();
+    e.preventDefault();
   });
   p.appendChild(inputAddress);
   p.insertAdjacentHTML('beforeend', ' &equals; ');
@@ -250,8 +261,9 @@ export function generateControl(options: IControlOptions) {
     if (e.key === " " || (e.key.length === 1 && isNaN(+e.key))) {
       inputAddressValue.value = e.key.charCodeAt(0).toString();
     }
+    e.preventDefault();
   });
-  inputAddressValue.addEventListener('change', () => {
+  inputAddressValue.addEventListener('change', e => {
     // Write to address
     const decimal = +inputAddressValue.value;
     if (options.editable && !isNaN(decimal) && isFinite(decimal) && addressViewing >= 0 && addressViewing < view.length) {
@@ -261,6 +273,7 @@ export function generateControl(options: IControlOptions) {
       options.onupdate(DATA.dataView);
     }
     inputtedAddress(inputAddress.value); // Reset
+    e.preventDefault();
   });
   if (!options.editable) inputAddressValue.readOnly = true;
   p.appendChild(inputAddressValue);
@@ -272,7 +285,7 @@ export function generateControl(options: IControlOptions) {
   inputSize.type = "number";
   inputSize.min = "0";
   if (options.editable && options.resizable) {
-    inputSize.addEventListener("change", () => {
+    inputSize.addEventListener("change", e => {
       let size = parseInt(inputSize.value);
       if (size >= 0 && size !== view.length) {
         let buff: ArrayBuffer;
@@ -288,6 +301,7 @@ export function generateControl(options: IControlOptions) {
         view.update();
       }
       updateGUI();
+      e.preventDefault();
     });
   } else {
     inputSize.readOnly = true;
@@ -328,7 +342,7 @@ export function generateControl(options: IControlOptions) {
   p.insertAdjacentHTML("beforeend", " Text ");
   let displayTextInput = document.createElement("input");
   displayTextInput.value = view.text;
-  displayTextInput.addEventListener("change", () => {
+  displayTextInput.addEventListener("change", e => {
     try {
       view.text = displayTextInput.value;
       view.update();
@@ -336,6 +350,7 @@ export function generateControl(options: IControlOptions) {
       displayTextInput.value = view.text ?? '';
       alert(`Unable to view as text '${displayTextInput.value}'`);
     }
+    e.preventDefault();
   });
   p.appendChild(displayTextInput);
 
@@ -487,14 +502,16 @@ export function generateControl(options: IControlOptions) {
       if (e.key.length === 1 && isNaN(+e.key)) {
         inputSetValue.value = e.key.charCodeAt(0).toString();
       }
+      e.preventDefault();
     });
-    inputSetValue.addEventListener('change', () => {
+    inputSetValue.addEventListener('change', e => {
       let value = +inputSetValue.value;
       if (isNaN(value) || !isFinite(value)) {
         inputSetValue.value = "0";
       } else {
         inputSetValue.value = value.toString();
       }
+      e.preventDefault();
     })
     p.appendChild(inputSetValue);
     let checkboxFillRandom = document.createElement("input");
@@ -519,7 +536,7 @@ export function generateControl(options: IControlOptions) {
   inputRows.max = "50";
   inputRows.value = view.rows.toString();
   p.appendChild(inputRows);
-  inputRows.addEventListener('change', () => {
+  inputRows.addEventListener('change', e => {
     const rows = parseInt(inputRows.value);
     if (rows >= +inputRows.min && rows < +inputRows.max) {
       view.rows = rows;
@@ -527,6 +544,7 @@ export function generateControl(options: IControlOptions) {
     } else {
       inputRows.value = view.rows.toString();
     }
+    e.preventDefault();
   });
   // Col count
   p.insertAdjacentHTML('beforeend', ' &nbsp;|&nbsp; Cols: ');
@@ -536,7 +554,7 @@ export function generateControl(options: IControlOptions) {
   inputCols.max = "75";
   inputCols.value = view.cols.toString();
   p.appendChild(inputCols);
-  inputCols.addEventListener('change', () => {
+  inputCols.addEventListener('change', e => {
     const cols = parseInt(inputCols.value);
     if (cols >= +inputCols.min && cols < +inputCols.max) {
       view.cols = cols;
@@ -544,6 +562,7 @@ export function generateControl(options: IControlOptions) {
     } else {
       inputCols.value = view.cols.toString();
     }
+    e.preventDefault();
   });
   // Download as file
   p.insertAdjacentHTML('beforeend', ' &nbsp;|&nbsp; ');
@@ -564,7 +583,7 @@ export function generateControl(options: IControlOptions) {
   p.insertAdjacentHTML('beforeend', ' &nbsp;');
   let btnDownloadText = document.createElement("button");
   btnDownloadText.innerText = 'Download as Text';
-  btnDownloadText.addEventListener('click', () => {
+  function download() {
     let range = [0, view.length], rangeInput = prompt(`Range of bytes to convert`, range.join(', '));
     if (rangeInput === null) return;
     if (rangeInput) {
@@ -576,13 +595,15 @@ export function generateControl(options: IControlOptions) {
     let dec = new TextDecoder();
     let text = dec.decode(DATA.dataView.buffer.slice(range[0], range[1]));
     downloadTextFile(text, 'data.txt');
-  });
+  }
+  btnDownloadText.addEventListener('click', download);
   p.appendChild(btnDownloadText);
   // Upload a file
+  let upload = async () => { };
   if (options.editable) {
     let inputUpload = document.createElement('input');
     inputUpload.type = 'file';
-    inputUpload.addEventListener('input', async () => {
+    upload = async () => {
       const file = inputUpload.files[0];
       if (file) {
         let buff = await readBinaryFile(file);
@@ -592,7 +613,8 @@ export function generateControl(options: IControlOptions) {
         options.onupdate(DATA.dataView);
         updateGUI();
       }
-    });
+    };
+    inputUpload.addEventListener('input', upload);
 
     p.insertAdjacentHTML('beforeend', ' &nbsp;');
     let btnUpload = document.createElement('button');
@@ -601,7 +623,75 @@ export function generateControl(options: IControlOptions) {
     p.appendChild(btnUpload);
   }
 
+  // Keyboard control
+  if (options.keyboardControl) {
+    function changeAddress(newAddr: number) {
+      let arange = view.getAddressRange();
+      if (newAddr < arange[0]) {
+        view.startAddress -= view.rows * view.cols;
+        if (view.startAddress < 0) view.startAddress = 0;
+      } else if (newAddr > arange[1]) {
+        view.startAddress += view.rows * view.cols;
+      }
+      inputtedAddress(newAddr);
+      updateGUI();
+      view.update();
+    }
+
+    let editMSN = true; // In hex digit "01", edit "0" or "1"?
+    let handle = (e: Event) => {
+      const key = (e as KeyboardEvent).key;
+      if (key === 'ArrowRight') {
+        if (addressViewing + 1 < view.length) {
+          changeAddress(addressViewing + 1);
+          editMSN = true;
+          e.preventDefault();
+        }
+      } else if (key === 'ArrowLeft') {
+        if (addressViewing - 1 >= 0) {
+          changeAddress(addressViewing - 1);
+          editMSN = true;
+          e.preventDefault();
+        }
+      } else if (key === 'ArrowUp') {
+        if (addressViewing - view.rows >= 0) {
+          changeAddress(addressViewing - view.rows);
+          editMSN = true;
+          e.preventDefault();
+        }
+      } else if (key === 'ArrowDown') {
+        if (addressViewing + view.rows < view.length) {
+          changeAddress(addressViewing + view.rows);
+          editMSN = true;
+          e.preventDefault();
+        }
+      } else if (/[0-9a-fA-F]/.test(key)) {
+        let n = parseInt(key, 16), val = DATA.dataView.getUint8(addressViewing);
+        DATA.dataView.setUint8(addressViewing, editMSN ? ((n << 4) | (val & 0x0f)) : ((val & 0xf0) | n));
+        updateGUI();
+        view.update();
+        options.onupdate(DATA.dataView);
+        editMSN = !editMSN;
+      } else if (key === 'i') {
+        inputAddressValue.focus();
+      } else if ((e as KeyboardEvent).ctrlKey && (key === 'd' || key === 'o')) {
+        if (key === 'd') {
+          download();
+          e.preventDefault();
+        } else if (key === 'o') {
+          upload();
+          e.preventDefault();
+        }
+      }
+    };
+    eventMap.set("keydown", handle);
+  }
+
   updateGUI();
 
+  // Register all events
+  viewDiv.tabIndex = 0;
+  viewDiv.focus();
+  eventMap.forEach((handle, type) => viewDiv.addEventListener(type, handle));
   return DATA;
 }
