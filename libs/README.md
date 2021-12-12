@@ -2,6 +2,11 @@
 
 These a general useful programs.
 
+# `BitArray.ts`
+**About**: A class for efficiently representing a bit/boolean array
+
+**Dependencies**: *None*
+
 # `Blocker.ts`
 **About**: A class for blocking code using Promises
 
@@ -51,6 +56,11 @@ These a general useful programs.
 
 # `Screen.ts`
 **About**: An HTML canvas which acts as a screen
+
+**Dependencies**: *None*
+
+# `SegmentDisplay.ts`
+**About**: Class which displays a 7-segment display on a canvas. SUpports digits 0-F
 
 **Dependencies**: *None*
 
