@@ -1,15 +1,14 @@
-
 type FontStyle = "normal" | "italic" | "oblique";
 type FontVariant = "normal" | "small-caps";
 type FontWeight = "lighter" | "normal" | "bold" | "bolder" | 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900;
 
 export class Font {
-  public style: FontStyle;
-  public variant: FontVariant;
-  public weight: FontWeight;
-  public size: number;
-  public sizeUnits: string;
-  public family: string;
+  public style: FontStyle = "normal";
+  public variant: FontVariant = "normal";
+  public weight: FontWeight = "normal";
+  public size: number = 10;
+  public sizeUnits: string = "px";
+  public family: string = "sans-serif";
 
   constructor() {
     this.toDefault();
@@ -50,7 +49,7 @@ export class Font {
   /** @chainable option to set properties */
   public set(prop: string, value: any) {
     if (prop in this) {
-      this[prop] = value;
+      (this as any)[prop] = value;
       return this;
     } else {
       throw new Error(`Property '${prop}' does not exist`);

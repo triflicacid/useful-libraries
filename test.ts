@@ -1,4 +1,4 @@
-import { roundedRect } from "./libs/canvasUtils";
+import { drawArrow, roundedRect } from "./libs/canvasUtils";
 
 function main() {
   var canvas = document.createElement('canvas');
@@ -8,12 +8,7 @@ function main() {
   document.body.appendChild(canvas);
   var ctx = canvas.getContext('2d');
 
-  roundedRect(ctx, 40, 40, 100, 100, 10, 20, 30, 40);
-  ctx.strokeStyle = "purple";
-  ctx.lineWidth = 4;
-  ctx.stroke();
-  ctx.fillStyle = 'violet';
-  ctx.fill();
+  drawArrow(ctx, 10, 10, 60, 60, 4, 15);
 }
 
 window.addEventListener("load", main);

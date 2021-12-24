@@ -31,3 +31,28 @@ export function roundedRect(ctx: CanvasRenderingContext2D, x: number, y: number,
 
   ctx.closePath();
 }
+
+export function drawArrow(ctx: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number, aWidth: number, aLength: number, arrowStart = false, arrowEnd = true) {
+  let dx = x1 - x0;
+  let dy = y1 - y0;
+  let angle = Math.atan2(dy, dx);
+  let length = Math.sqrt(dx * dx + dy * dy);
+  ctx.save();
+  ctx.translate(x0, y0);
+  ctx.rotate(angle);
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(length, 0);
+  if (arrowStart) {
+    ctx.moveTo(aLength, -aWidth);
+    ctx.lineTo(0, 0);
+    ctx.lineTo(aLength, aWidth);
+  }
+  if (arrowEnd) {
+    ctx.moveTo(length - aLength, -aWidth);
+    ctx.lineTo(length, 0);
+    ctx.lineTo(length - aLength, aWidth);
+  }
+  ctx.stroke();
+  ctx.restore();
+}

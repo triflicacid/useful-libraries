@@ -1,3 +1,5 @@
+/** Sound.ts taken from github ruben4447/useful-libraries (c) Ruben Saunders 2021 */
+
 import { clamp } from "./utils";
 
 /** Class containing static control functions for the Sound objects */
@@ -117,7 +119,7 @@ export class Sound {
    * @param path     Path to sound file
    * @param fetch   Fetch sound data immediatly?
    */
-  constructor(path, fetch = true) {
+  constructor(path: string, fetch = true) {
     this.path = path;
     this._loadInternal();
 
@@ -150,7 +152,7 @@ export class Sound {
     const arraybuffer = await response.arrayBuffer();
 
     // Decode to audio buffer
-    const audioBuffer = await this.ctx.decodeAudioData(arraybuffer);
+    const audioBuffer = await (this.ctx as AudioContext).decodeAudioData(arraybuffer);
     this.buffer = audioBuffer;
 
     return this;
@@ -160,7 +162,7 @@ export class Sound {
    * Create audio buffer from array buffer
    */
   public async loadArrayBuffer(buf: ArrayBuffer) {
-    this.buffer = await this.ctx.decodeAudioData(buf);
+    this.buffer = await (this.ctx as AudioContext).decodeAudioData(buf);
     return this.buffer;
   }
 
@@ -179,16 +181,16 @@ export class Sound {
       if (this.buffer == undefined) await this.load();
 
       // Create source buffer
-      let source = this.ctx.createBufferSource();
-      source.buffer = this.buffer;
+      let source = (this.ctx as AudioContext).createBufferSource();
+      source.buffer = this.buffer as AudioBuffer;
 
       // Create filter for buffer
-      let filter = this.ctx.createBiquadFilter();
+      let filter = (this.ctx as AudioContext).createBiquadFilter();
       filter.type = "lowpass";
       filter.frequency.value = 5000; // Default frequency
 
       // Connect source to things needed to play sound
-      source.connect(this.gainNode);
+      source.connect(this.gainNode as GainNode);
       source.connect(filter);
 
       // Event handlers for finishing
@@ -228,7 +230,7 @@ export class Sound {
     if (volume !== undefined) {
       volume = clamp(volume, 0, 1);
       this._volume = volume;
-      this.gainNode.gain.value = volume;
+      (this.gainNode as GainNode).gain.value = volume;
     }
     return this._volume;
   }
@@ -249,7 +251,7 @@ export class Sound {
    */
   public pause() {
     if (this.isPlaying && this.activeAudio) {
-      this.pausedAt = this.ctx.currentTime;
+      this.pausedAt = (this.ctx as AudioContext).currentTime;
       this.stop();
     }
   }
@@ -260,7 +262,7 @@ export class Sound {
    */
   async stop() {
     // Close current audio context
-    await this.ctx.close();
+    await (this.ctx as AudioContext).close();
     this.isPlaying = false;
     this.activeAudio = null;
 
@@ -281,7 +283,7 @@ export class Beep {
   private _frequency: number = 500;
   private _type: OscillatorType = "square";
   private _playing: boolean = false;
-  private _startReject: (reason?: any) => void | undefined; // reject function of this.start Promise
+  private _startReject: ((reason?: any) => void) | undefined; // reject function of this.start Promise
 
   constructor() {
     // Initiate
@@ -298,11 +300,11 @@ export class Beep {
    */
   public createNew() {
     if (this._playing) throw new Error(`Cannot create new oscillator whilst one is playing`);
-    this._oscillator = this._ctx.createOscillator();
+    this._oscillator = (this._ctx as AudioContext).createOscillator();
     this._oscillator.frequency.value = this._frequency;
     this._oscillator.type = this._type;
-    this._oscillator.connect(this._gain);
-    this._gain.gain.value = this._volume;
+    this._oscillator.connect(this._gain as GainNode);
+    (this._gain as GainNode).gain.value = this._volume;
     return this;
   }
 
@@ -354,7 +356,7 @@ export class Beep {
 
     this.createNew(); // Create new oscillator
 
-    this._oscillator.start(this._ctx.currentTime);
+    (this._oscillator as OscillatorNode).start((this._ctx as AudioContext).currentTime);
     this._playing = true;
     if (typeof duration == 'number' && !isNaN(duration) && isFinite(duration)) {
       return new Promise((resolve, reject) => {
@@ -379,9 +381,9 @@ export class Beep {
     if (playing) this.stop();
 
     this.createNew();
-    this._oscillator.frequency.value = this._frequency;
-    this._oscillator.type = this._type;
-    this._gain.gain.value = this._volume;
+    (this._oscillator as OscillatorNode).frequency.value = this._frequency;
+    (this._oscillator as OscillatorNode).type = this._type;
+    (this._gain as GainNode).gain.value = this._volume;
 
     if (playing) return this.start();
 
@@ -394,7 +396,7 @@ export class Beep {
    */
   public stop() {
     if (!this._playing) return false;
-    this._oscillator.stop();
+    (this._oscillator as OscillatorNode).stop();
     this._playing = false;
     if (this._startReject) {
       this._startReject(new Error('STOP'));
