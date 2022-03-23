@@ -96,6 +96,8 @@ For this, focus must be on the div. Arrows will change move the edit cursor. Pre
 
 **Dependencies**: *None*
 
+**Note** example styling is available in `Tabs.css`
+
 # `utils.ts`
 **About**: A collection of useful functions
 

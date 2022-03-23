@@ -428,7 +428,7 @@ export class Complex {
     if (typeof z === 'bigint') return new Complex(Number(z), 0);
     if (typeof z === 'string') {
       let parts = z.split(/(?=[\-\+])/).map(x => x.trim()).filter(x => x.length > 0);
-      let complex: Complex;
+      let complex: Complex | undefined;
       if (parts.length === 1) {
         complex = new Complex(+parts[0], 0);
       } else if (parts.length === 2 && parts[1].indexOf('i') !== -1) {
