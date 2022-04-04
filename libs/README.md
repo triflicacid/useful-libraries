@@ -12,6 +12,12 @@ These a general useful programs.
 
 **Dependencies**: *None*
 
+
+# `Blocker.ts`
+**About**: Utility function for HTML canvas
+
+**Dependencies**: `utils.ts`
+
 # `Console.ts`
 **About**: Generates a HTML console
 

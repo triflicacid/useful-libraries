@@ -1,3 +1,5 @@
+import { IRec, IVec, sortPointsByAngleFromCentre } from "./utils";
+
 /**
  * Creates a rectangle with rounded corners
  * This function only creates the path. Call fill() or stroke() after.
@@ -55,4 +57,33 @@ export function drawArrow(ctx: CanvasRenderingContext2D, x0: number, y0: number,
   }
   ctx.stroke();
   ctx.restore();
+}
+
+/** Draw a rectange.
+ * coord mode:
+ *  0 -> coorinaes represent top-left. Extend x = w, y = h
+ *  1 -> coordinates represent centre. Extend x = +-w/2, y = +-h/2
+ * draw mode:
+ *  1 -> stroke
+ *  2 -> fill
+ *  3 -> fill & stroke
+*/
+export function drawRect(ctx: CanvasRenderingContext2D, rec: IRec, coordMode: 0 | 1, drawMode: 1 | 2 | 3) {
+  ctx.beginPath();
+  if (coordMode === 0) ctx.rect(rec.x, rec.y, rec.w, rec.h);
+  else if (coordMode === 1) ctx.rect(rec.x - rec.w / 2, rec.y - rec.h / 2, rec.w, rec.h);
+  if (drawMode === 1 || drawMode === 3) ctx.stroke();
+  if (drawMode === 2 || drawMode === 3) ctx.fill();
+  ctx.closePath();
+}
+
+/** Draw polygon */
+export function plotPolyon(ctx: CanvasRenderingContext2D, centre: IVec, ...points: IVec[]) {
+  ({ points } = sortPointsByAngleFromCentre(centre, points));
+
+  ctx.moveTo(points[0].x, points[0].y);
+  for (let i = 1; i < points.length; i++) {
+    ctx.lineTo(points[i].x, points[i].y);
+  }
+  ctx.lineTo(points[0].x, points[0].y);
 }

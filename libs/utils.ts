@@ -361,3 +361,113 @@ export async function sleep(ms: number): Promise<number> {
     setTimeout(() => res(ms), ms);
   });
 }
+
+/** Represent a cardinal direction */
+export enum Direction {
+  East,
+  NorthEast,
+  North,
+  NorthWest,
+  West,
+  SouthWest,
+  South,
+  SouthEast,
+}
+
+/** Get angle direction of point2 from point1 */
+export function getDirectionBetween(point1: IVec, point2: IVec): Direction {
+  if (point1.y === point2.y && point2.x >= point1.x) return Direction.East; // Right
+  if (point2.x > point1.x && point2.y < point1.y) return Direction.NorthEast; // Top Right
+  if (point1.x === point2.x && point2.y < point1.y) return Direction.North; // Up
+  if (point2.x < point1.x && point2.y < point1.y) return Direction.NorthWest; // Top Left
+  if (point1.y === point2.y && point2.x < point1.x) return Direction.West; // Left
+  if (point2.x < point1.x && point2.y > point1.y) return Direction.SouthWest; // Bottom Left
+  if (point1.x === point2.x && point2.y > point1.y) return Direction.South; // Down
+  if (point2.x > point1.x && point2.y > point1.y) return Direction.SouthEast; // Bottom Right
+}
+
+/** Return direction from angle (radians) between 0 and 2pi */
+export function getDirectionFromAngle(α: number): Direction {
+  if (α > 1.5*Math.PI) return Direction.SouthEast;
+  if (α === 1.5*Math.PI) return Direction.South;
+  if (α > Math.PI) return Direction.SouthWest;
+  if (α === Math.PI) return Direction.SouthWest;
+  if (α > 0.5*Math.PI) return Direction.NorthWest;
+  if (α === 0.5*Math.PI) return Direction.North;
+  if (α > 0) return Direction.NorthEast;
+  if (α === 0) return Direction.East;
+}
+
+/** Get angle between point1 and point2 */
+export function getAngleBetween(point1: IVec, point2: IVec) {
+  if (point1.y === point2.y && point2.x >= point1.x) return 0; // Right
+  if (point2.x > point1.x && point2.y < point1.y) return Math.atan((point1.y - point2.y) / (point2.x - point1.x)); // Top Right
+  if (point1.x === point2.x && point2.y < point1.y) return 0.5*Math.PI; // Up
+  if (point2.x < point1.x && point2.y < point1.y) return Math.PI - Math.atan((point1.y - point2.y) / (point1.x - point2.x)); // Top Left
+  if (point1.y === point2.y && point2.x < point1.x) return Math.PI; // Left
+  if (point2.x < point1.x && point2.y > point1.y) return Math.PI + Math.atan((point2.y - point1.y) / (point1.x - point2.x)); // Bottom Left
+  if (point1.x === point2.x && point2.y > point1.y) return 1.5*Math.PI; // Down
+  if (point2.x > point1.x && point2.y > point1.y) return 2*Math.PI - Math.atan((point2.y - point1.y) / (point2.x - point1.x)); // Bottom Left
+}
+
+export interface IVec {
+  x: number;
+  y: number;
+}
+
+export interface IRec extends IVec {
+  w: number;
+  h: number;
+}
+
+/** angle in [-pi, pi] to [0, 2pi] */
+export const adjustRad = (angle: number) => (angle + 2*Math.PI) % (2*Math.PI);
+
+/** Sort array of coordinate points around a central point by angle */
+export function sortPointsByAngleFromCentre(centre: IVec, points: IVec[]) {
+  points = [...points];
+  const angles = points.map(point => getAngleBetween(centre, point));
+  let sorted = false;
+  while (!sorted) {
+    sorted = true;
+    for (let i = 0; i < points.length - 1; i++) {
+      if (angles[i] > angles[i + 1]) {
+        ([angles[i], angles[i + 1]] = [angles[i + 1], angles[i]]);
+        ([points[i], points[i + 1]] = [points[i + 1], points[i]]);
+        sorted = false;
+      }
+    }
+  }
+  return { centre, points, angles };
+}
+
+/** Return point on polygon radius α radians anticlockwise from origin 0 to 2pi */
+export function getPointOnRadius(centre: IVec, points: IVec[], α: number): IVec {
+  let angles: number[];
+  ({ points, angles } = sortPointsByAngleFromCentre(centre, points));
+
+  // Create point at 0rad
+  angles.unshift(0);
+  if (points[0].x === points[points.length-1].x) {
+    points.unshift({ x: points[0].x, y: centre.y });
+  } else {
+    let p1 = { x: points[0].x - centre.x, y: points[0].y - centre.y } as IVec;
+    let p2 = { x: points[points.length - 1].x - centre.x, y: points[points.length - 1].y - centre.y } as IVec;
+    let m = (p2.y - p1.y) / (p2.x - p1.x);
+    let c = p1.y - m * p1.x;
+    points.unshift({ x: centre.x - c / m, y: centre.y });
+  }
+
+  const i = angles.findIndex((_, i) => i + 1 === angles.length ? true : angles[i] < α && angles[i + 1] >= α);
+  const start = i, end = i === angles.length - 1 ? 0 : i + 1;
+  let a = Math.hypot(points[start].x - centre.x, centre.y - points[start].y);
+  let b = Math.hypot(points[start].x - points[end].x, points[start].y - points[end].y);
+  let c = Math.hypot(points[end].x - centre.x, points[end].y - centre.y);
+  let C = Math.acos((a*a + b*b - c*c)/(2*a*b));
+  let β = Math.PI - (α - angles[start]) - C;
+  c = a * Math.sin(C) / Math.sin(β);
+  return {
+    x: centre.x + c * Math.cos(α),
+    y: centre.y - c * Math.sin(α)
+  } as IVec;
+}
