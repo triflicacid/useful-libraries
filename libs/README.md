@@ -12,11 +12,15 @@ These a general useful programs.
 
 **Dependencies**: *None*
 
-
-# `Blocker.ts`
+# `canvasUtils.ts`
 **About**: Utility function for HTML canvas
 
 **Dependencies**: `utils.ts`
+
+# `color.ts`
+**About**: Color conversion functions
+
+**Dependencies**: *None*
 
 # `Console.ts`
 **About**: Generates a HTML console
