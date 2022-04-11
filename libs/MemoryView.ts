@@ -208,7 +208,7 @@ export interface IControlReturnData {
 export function generateControl(options: IControlOptions) {
   options.editable ??= true;
   options.resizable ??= true;
-  options.onupdate ??= d => void 0;
+  options.onupdate ??= () => void 0;
   options.colorCurrent ??= 'yellow';
   options.keyboardControl ??= true;
 
@@ -447,7 +447,7 @@ export function generateControl(options: IControlOptions) {
       max = Math.min(view.length, max);
       const number = +inputSetValue.value;
       for (let i = min; i < max; ++i) {
-        DATA.dataView.setUint8(i, number);
+        DATA.dataView.setUint8(i, checkboxFillRandom.checked ? Math.floor(Math.random() * 255) : number);
       }
       updateGUI();
       view.update();
@@ -459,7 +459,7 @@ export function generateControl(options: IControlOptions) {
     btnSetAll.addEventListener('click', () => {
       const number = +inputSetValue.value;
       for (let i = 0; i < DATA.dataView.byteLength; ++i) {
-        DATA.dataView.setUint8(i, number);
+        DATA.dataView.setUint8(i, checkboxFillRandom.checked ? Math.floor(Math.random() * 255) : number);
       }
       updateGUI();
       view.update();
@@ -521,6 +521,31 @@ export function generateControl(options: IControlOptions) {
     });
     p.appendChild(checkboxFillRandom);
     p.insertAdjacentHTML("beforeend", " <abbr title='Fill range with random bytes'>Random</abbr>");
+
+    p.insertAdjacentHTML("beforeend", " | ");
+    let insertText = document.createElement("button");
+    insertText.innerText = "Insert";
+    p.appendChild(insertText);
+    insertText.addEventListener("click", () => {
+      let bytes = new TextEncoder().encode(inputText.value);
+      for (let a = +inputTextFrom.value, i = 0; i < bytes.byteLength && a < DATA.dataView.byteLength; a++, i++) {
+        DATA.dataView.setUint8(a, bytes[i]);
+      }
+      updateGUI();
+      view.update();
+      options.onupdate(DATA.dataView);
+    });
+    p.insertAdjacentHTML("beforeend", " ");
+    let inputText = document.createElement("input");
+    inputText.type = "text";
+    inputText.placeholder = "text";
+    p.appendChild(inputText);
+    p.insertAdjacentHTML("beforeend", " from ");
+    let inputTextFrom = document.createElement("input");
+    inputTextFrom.type = "number";
+    inputTextFrom.value = "0";
+    inputTextFrom.title = "Address to insert text from";
+    p.appendChild(inputTextFrom);
   }
 
   // Append MemoryViewer to screen
