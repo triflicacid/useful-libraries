@@ -482,7 +482,7 @@ export class Spectrum {
       if (markStops && this.stops.some(s => s - PM < v && v <= s + PM)) {
         ctx.fillStyle = "black";
       } else {
-        const cdata = this.colorData.map(n => n === -1 ? v : n) as [number, number, number];
+        const cdata = this.colorData.map(n => isFinite(n) ? n : n < 0 ? v : this.range[1] - v) as [number, number, number];
         const rgb = this._func ? this._func(...cdata) : cdata;
         ctx.fillStyle = col2str("rgb", rgb);
       }
@@ -534,4 +534,84 @@ export class Spectrum {
     draw();
     return r;
   }
+}
+
+/**
+ * Get complementary color (opposite on color wheel) in HSL color space
+ * @params h: hue range [0, 360]
+ * @params s: saturation range [0, 100]
+ * @params l: lightness range [0, 100]
+ * @returns HSL - [h, s, l]
+ */
+export function getComplementaryHSL(h: number, s: number, l: number): [number, number, number] {
+  return [(h + 180) % 360, s, l];
+}
+
+/**
+ * Get split-complementary color (analogous to opposite on color wheel) in HSL color space
+ * @params h: hue range [0, 360]
+ * @params s: saturation range [0, 100]
+ * @params l: lightness range [0, 100]
+ * @returns [HSL, HSL] where HSL is [h, s, l]
+ */
+export function getSplitComplementary(h: number, s: number, l: number): [[number, number, number], [number, number, number]] {
+  return getAnalogous(...getComplementaryHSL(h, s, l));
+}
+
+/**
+ * Get complementary color (opposite) in RGB color space
+ * @params r: red range [0, 255]
+ * @params g: green range [0, 255]
+ * @params b: lightness range [0, 255]
+ * @returns RGB - [r, g, b]
+ */
+export function getComplementaryRGB(r: number, g: number, b: number): [number, number, number] {
+  return [255 - r, 255 - g, 255 - b];
+}
+
+/**
+ * Get complementary color (opposite) in CMYK color space
+ * @params c: cyan range [0, 100]
+ * @params m: meganta range [0, 100]
+ * @params y: yellow range [0, 100]
+ * @params k: black range [0, 100]
+ * @returns CMYK = [c, y, m, k]
+ */
+export function getComplementaryCMYK(c: number, m: number, y: number, k: number): [number, number, number, number] {
+  return [100 - c, 100 - m, 100 - y, 100 - k];
+}
+
+/**
+ * Divide color wheel up to `n` divisions from a starting color
+ * @params n: divisions
+ * @params h: hue range [0, 360]
+ * @params s: saturation range [0, 100]
+ * @params l: lightness range [0, 100]
+ * @returns HSL[] - [h, s, l][]
+ */
+export function getDivisions(n: number, h = 0, s = 100, l = 50): [number, number, number][] {
+  return Array.from({ length: n }, (_, i) => ([(h + 360 / n * i) % 360, s, l]));
+}
+
+/**
+ * Get triadic colours
+ * @params h: hue range [0, 360]
+ * @params s: saturation range [0, 100]
+ * @params l: lightness range [0, 100]
+ * @returns [HSL, HSL, HSL] where HSL: [h, s, l]
+ */
+export function getTriadic(h: number, s: number, l: number) {
+  return getDivisions(3, h, s, l);
+}
+
+/**
+ * Get analogous colours - colours next to this on the colours wheel +-θ
+ * @params h: hue range [0, 360]
+ * @params s: saturation range [0, 100]
+ * @params l: lightness range [0, 100]
+ * @params θ: angle in DEGREES
+ * @returns [HSL-θ, HSL+θ] where HSL: [h, s, l]
+ */
+export function getAnalogous(h: number, s: number, l: number, θ = 20): [[number, number, number], [number, number, number]] {
+  return [[((h - θ) % 360 + 360) % 360, s, l], [((h + θ) % 360 + 360) % 360, s, l]];
 }
