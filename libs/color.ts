@@ -8,8 +8,18 @@ export const clamp = (n: number, min: number, max: number) => {
   return n;
 };
 
+/** Get coordinates from event over event.target */
+export function extractCoords(event: MouseEvent) {
+  const box = (<HTMLElement>event.target).getBoundingClientRect();
+  return [event.clientX - box.left, event.clientY - box.top];
+}
+
 /** Color formats which are represented as numefical arrays */
 type NColorFormat = "rgb" | "rgba" | "hsl" | "hsv" | "cmyk";
+/** Numeric data for NColorFormat */
+type NColorData = [number, number, number] | [number, number, number, number];
+/** Convert NColor to RGB */
+type NColorToRGBFunc = (a: number, b: number, c: number, d?: number) => [number, number, number];
 type ColorFormat = NColorFormat | "hex" | "hexa" | "css";
 
 /**
@@ -32,8 +42,8 @@ export function clampValues(format: NColorFormat, values: number[]) {
 }
 
 /** Given a color format, return string representation */
-export function col2str(format: NColorFormat, values: number[], dp = 2): string {
-  values = clampValues(format, values).map(n => +n.toFixed(dp));
+export function col2str(format: NColorFormat, values: NColorData, dp = 2): string {
+  values = clampValues(format, values).map(n => +n.toFixed(dp)) as NColorData;
   switch (format) {
     case "rgb":
       return "rgb(" + values.join(", ") + ")";
@@ -125,8 +135,8 @@ export function rgb2hsl(r: number, g: number, b: number) {
  * @params l: lightness range [0, 100]
  * @returns rgb: [r [0, 255], g [0, 255], b [0, 255]]
  */
-export function hsl2rgb(h: number, s: number, l: number) {
-  h = clamp(h, 0, 360);
+export function hsl2rgb(h: number, s: number, l: number): [number, number, number] {
+  h = clamp(h % 360, 0, 360);
   s = clamp(s, 0, 100) / 100;
   l = clamp(l, 0, 100) / 100;
   let c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c / 2, rgb: [number, number, number];
@@ -136,7 +146,7 @@ export function hsl2rgb(h: number, s: number, l: number) {
   else if (180 <= h && h < 240) rgb = [0, x, c];
   else if (240 <= h && h < 300) rgb = [x, 0, c];
   else if (300 <= h && h < 360) rgb = [c, 0, x];
-  return rgb.map(n => (n + m) * 255);
+  return rgb.map(n => (n + m) * 255) as [number, number, number];
 }
 
 /**
@@ -415,4 +425,113 @@ export const cssColors: { [css: string]: string } = {
 /** Determine whether white or black is best colour for text on given RGB background */
 export function bestTextColor(rgb: [number, number, number], n = 100) {
   return (rgb[0] * 0.299 + rgb[1] * 0.587 + rgb[2] * 0.114) > n ? "black" : "white";
+}
+
+/** Represent a color spectrum with one changing variable */
+export class Spectrum {
+  public readonly format: NColorFormat;
+  public colorData: NColorData;
+  public range: [number, number];
+  private readonly _func: NColorToRGBFunc | undefined;
+  /** Draw black line when variable parameter are +-1 withing these values */
+  public stops: number[];
+
+  /**
+   * 
+   * @param format Color format
+   * @param colorData Color data. Use +-Infinity for placeholder for values which will vary. `-Infinity` values vary range[0] to range[1]. `+Infinity` values vary range[1] to range[0].
+   * @param range Range of values to take for varying parameter
+   * @param funcToRGB Function - convert colorData to RGB color value. Not needed if format is `rgb` or `rgba`
+   */
+  constructor(format: NColorFormat, colorData: NColorData, range: [number, number], funcToRGB?: NColorToRGBFunc) {
+    this.format = format;
+    this._func = funcToRGB;
+    this.colorData = colorData;
+    this.range = range;
+    this.stops = [];
+  }
+
+  /** Draw background to offscreen canvas */
+  private _draw(width: number, height: number) {
+    const canvas = new OffscreenCanvas(width, height), ctx = canvas.getContext("2d");
+    const dv = (this.range[1] - this.range[0]) / width;
+    for (let i = 0; i < width; i++) {
+      const v = this.range[0] + dv * i;
+      const cdata = this.colorData.map(n => isFinite(n) ? n : n < 0 ? v : this.range[1] - v) as [number, number, number];
+      const rgb = this._func ? this._func(...cdata) : cdata;
+      ctx.fillStyle = col2str("rgb", rgb);
+      ctx.fillRect(i, 0, 1, height);
+    }
+    return canvas;
+  }
+
+  private _drawStops(stops: number[], canvas: OffscreenCanvas) {
+    const dv = (this.range[1] - this.range[0]) / canvas.width, ctx = canvas.getContext("2d");
+    for (let stop of stops) {
+      ctx.fillStyle = "black";
+      ctx.fillRect(stop / dv, 0, 1, canvas.height);
+    }
+  }
+
+  /** Render to a canvas context */
+  public drawToCanvas(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, markStops = true) {
+    let dv = (this.range[1] - this.range[0]) / width;
+    const PM = dv / 2;
+    for (let i = 0; i < width; i++) {
+      const v = this.range[0] + dv * i;
+      if (markStops && this.stops.some(s => s - PM < v && v <= s + PM)) {
+        ctx.fillStyle = "black";
+      } else {
+        const cdata = this.colorData.map(n => n === -1 ? v : n) as [number, number, number];
+        const rgb = this._func ? this._func(...cdata) : cdata;
+        ctx.fillStyle = col2str("rgb", rgb);
+      }
+      ctx.fillRect(x + i, y, 1, height);
+    }
+  }
+
+  /** Render to an offscreen canvas */
+  public drawToOffscreenCanvas(width: number, height: number, markStops = true) {
+    const oc = this._draw(width, height);
+    if (markStops) this._drawStops(this.stops, oc);
+    return oc;
+  }
+
+  /** Create and return interactive environment. Color stops are provided through return object. Calls 'onclick' whenever click event is caught */
+  public createInteractive(width: number, height: number, addEvents = true) {
+    const div = document.createElement("div");
+    div.style.width = width + "px";
+    div.style.height = height + "px";
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    div.appendChild(canvas);
+    const ctx = canvas.getContext("2d");
+    let oc: OffscreenCanvas, pixelData: Uint8ClampedArray;
+    let dv = (this.range[1] - this.range[0]) / width;
+    if (addEvents) {
+      canvas.style.cursor = "crosshair";
+      canvas.addEventListener("mousedown", event => {
+        const [x, y] = extractCoords(event);
+        r.stops[csi] = x * dv;
+        draw();
+        r.onclick(event, x, y);
+      });
+    }
+    const draw = () => {
+      oc = this._draw(width, height);
+      pixelData = oc.getContext("2d").getImageData(0, 0, width, 1).data;
+      this._drawStops(r.stops, oc);
+      ctx.drawImage(oc, 0, 0);
+    };
+    /** Return native this.format color data at given stop */
+    const getColorAtStop = (stop: number) => this.colorData.map(n => n === -1 ? this.range[0] + stop : n);
+    /** Return RGBA colour at a given x coordinate */
+    const getRGBAColor = (x: number) => Array.from(pixelData.slice(x * 4, (x + 1) * 4)) as [number, number, number, number];
+    const csi = this.stops.length;
+    const onclick: (event: MouseEvent, x: number, y: number) => void = () => { };
+    const r = { element: div, stops: [...this.stops], getColorAtStop, getRGBAColor, draw, onclick };
+    draw();
+    return r;
+  }
 }

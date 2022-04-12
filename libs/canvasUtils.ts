@@ -87,3 +87,8 @@ export function plotPolyon(ctx: CanvasRenderingContext2D, centre: IVec, ...point
   }
   ctx.lineTo(points[0].x, points[0].y);
 }
+
+/** Get pixel color at [x,y] */
+export function getPixelColor(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, x: number, y: number) {
+  return Array.from(ctx.getImageData(x, y, 1, 1).data);
+}
