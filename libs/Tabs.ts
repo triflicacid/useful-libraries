@@ -11,12 +11,14 @@ export class Tabs {
   private _tabContainer: HTMLDivElement;
   private _map: TabMap;
   private _openTab: string;
+  public onTabOpen: (tab: string) => void;
 
   /**
    * @param target - Where to place all the tabs and the controller
    * @param map - Object of tab information
+   * @params pos - `-1` = bottom, `0` = none, `1` = top
    */
-  constructor(target: HTMLDivElement, map: TabMap) {
+  constructor(target: HTMLDivElement, map: TabMap, pos: -1 | 0 | 1 = 0) {
     this._wrapper = target;
 
     // Check each tab has some associated content
@@ -28,8 +30,12 @@ export class Tabs {
     // Container for tabs
     this._tabContainer = document.createElement('div');
     this._tabContainer.classList.add('tab-container');
-    this._wrapper.appendChild(this.generateController());
+    const ctrl = this.generateController();
+    if (pos === -1) ctrl.classList.add('pos-bottom');
+    if (pos === 1) ctrl.classList.add('pos-top');
+    this._wrapper.appendChild(ctrl);
     this._wrapper.appendChild(this._tabContainer);
+    this.onTabOpen = () => void 0;
 
     this.closeAll();
   }
@@ -68,6 +74,7 @@ export class Tabs {
     this._openTab = name;
     this._map.get(name).btn.dataset.open = "true";
     this._tabContainer.appendChild(this._map.get(this._openTab).content); // Add tab content to document
+    this.onTabOpen(name);
   }
 
   /** Close tab with given tab name */
@@ -77,7 +84,6 @@ export class Tabs {
     const tab = this._map.get(name);
     tab.btn.dataset.open = "false";
     tab.content.remove();// Remove tab content from document
-
   }
 
   /** Toggle state of tab with given name */

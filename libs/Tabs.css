@@ -9,15 +9,16 @@
     background-color: #c4c1c1;
 }
 
-.tab-bottom > .tab-controller {
-    border: 1px solid black;
-    margin: none;
-    padding: 8px;
-    background-color: #c4c1c1;
+.tab-controller.pos-bottom {
     position: fixed;
     bottom: 1%;
     left: 1%;
-    width: calc(98% - 18px);
+}
+
+.tab-controller.pos-top {
+    position: fixed;
+    top: 1%;
+    left: 1%;
 }
 
 .tab-control-btn {
