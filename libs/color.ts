@@ -15,12 +15,12 @@ export function extractCoords(event: MouseEvent) {
 }
 
 /** Color formats which are represented as numefical arrays */
-type NColorFormat = "rgb" | "rgba" | "hsl" | "hsv" | "cmyk";
+export type NColorFormat = "rgb" | "rgba" | "hsl" | "hsv" | "cmyk";
 /** Numeric data for NColorFormat */
-type NColorData = [number, number, number] | [number, number, number, number];
+export type NColorData = [number, number, number] | [number, number, number, number];
 /** Convert NColor to RGB */
-type NColorToRGBFunc = (a: number, b: number, c: number, d?: number) => [number, number, number];
-type ColorFormat = NColorFormat | "hex" | "hexa" | "css";
+export type NColorToRGBFunc = (a: number, b: number, c: number, d?: number) => [number, number, number];
+export type ColorFormat = NColorFormat | "hex" | "hexa" | "css";
 
 /**
  * Given color format and array of values, return values in correct domain
@@ -89,8 +89,12 @@ export function rgba2hexa(r: number, g: number, b: number, a: number): string {
  * @returns RGB:[r [0, 255], g [0, 255], b [0, 255]]
 */
 export function hex2rgb(hex: string) {
-  let rgb: string[] = hex.length === 4 ? hex.substring(1).match(/[0-9A-Fa-f]/g).map(x => x + x) : hex.substring(1).match(/[0-9A-Fa-f]{2}/g);
-  return rgb.map(hex => clamp(parseInt(hex, 16), 0, 255)) as [number, number, number];
+  if (hex.match(/^#[0-9A-Fa-f]{6}$/) || hex.match(/^#[0-9A-Fa-f]{3}$/)) {
+    let rgb: string[] = hex.length === 4 ? hex.substring(1).match(/[0-9A-Fa-f]/g).map(x => x + x) : hex.substring(1).match(/[0-9A-Fa-f]{2}/g);
+    return rgb.map(hex => clamp(parseInt(hex, 16), 0, 255)) as [number, number, number];
+  } else {
+    return [0, 0, 0] as [number, number, number];
+  }
 }
 
 /**
@@ -427,6 +431,15 @@ export function bestTextColor(rgb: [number, number, number], n = 100) {
   return (rgb[0] * 0.299 + rgb[1] * 0.587 + rgb[2] * 0.114) > n ? "black" : "white";
 }
 
+export interface IInteractiveSpectra {
+  element: HTMLDivElement;
+  draw: () => void;
+  destroy: () => void;
+  getColorAtStop: (stop: number) => number[];
+  getRGBAColor: (x: number) => [number, number, number, number]
+  onclick: (e: MouseEvent, x: number, y: number) => void;
+}
+
 /** Represent a color spectrum with one changing variable */
 export class Spectrum {
   public readonly format: NColorFormat;
@@ -435,6 +448,8 @@ export class Spectrum {
   private readonly _func: NColorToRGBFunc | undefined;
   /** Draw black line when variable parameter are +-1 withing these values */
   public stops: number[];
+  /** All createInteractive return objects */
+  public readonly interactives: IInteractiveSpectra[];
 
   /**
    * 
@@ -449,13 +464,14 @@ export class Spectrum {
     this.colorData = colorData;
     this.range = range;
     this.stops = [];
+    this.interactives = [];
   }
 
   /** Draw background to offscreen canvas */
   private _draw(width: number, height: number) {
     const canvas = new OffscreenCanvas(width, height), ctx = canvas.getContext("2d");
     const dv = (this.range[1] - this.range[0]) / width;
-    for (let i = 0; i < width; i++) {
+    for (let i = 0; i <= width; i++) {
       const v = this.range[0] + dv * i;
       const cdata = this.colorData.map(n => isFinite(n) ? n : n < 0 ? v : this.range[1] - v) as [number, number, number];
       const rgb = this._func ? this._func(...cdata) : cdata;
@@ -469,7 +485,7 @@ export class Spectrum {
     const dv = (this.range[1] - this.range[0]) / canvas.width, ctx = canvas.getContext("2d");
     for (let stop of stops) {
       ctx.fillStyle = "black";
-      ctx.fillRect(stop / dv, 0, 1, canvas.height);
+      ctx.fillRect(stop / dv - 1, 0, 1, canvas.height);
     }
   }
 
@@ -477,7 +493,7 @@ export class Spectrum {
   public drawToCanvas(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, markStops = true) {
     let dv = (this.range[1] - this.range[0]) / width;
     const PM = dv / 2;
-    for (let i = 0; i < width; i++) {
+    for (let i = 0; i <= width; i++) {
       const v = this.range[0] + dv * i;
       if (markStops && this.stops.some(s => s - PM < v && v <= s + PM)) {
         ctx.fillStyle = "black";
@@ -498,10 +514,11 @@ export class Spectrum {
   }
 
   /** Create and return interactive environment. Color stops are provided through return object. Calls 'onclick' whenever click event is caught */
-  public createInteractive(width: number, height: number, addEvents = true) {
-    const div = document.createElement("div");
+  public createInteractive(width: number, height: number, colorStopIndex?: number, el: "div" | "span" = "div", addEvents = true) {
+    const div = document.createElement(el);
     div.style.width = width + "px";
     div.style.height = height + "px";
+    div.classList.add("color-spectrum");
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
@@ -513,26 +530,33 @@ export class Spectrum {
       canvas.style.cursor = "crosshair";
       canvas.addEventListener("mousedown", event => {
         const [x, y] = extractCoords(event);
-        r.stops[csi] = x * dv;
+        this.stops[colorStopIndex] = x * dv;
         draw();
-        r.onclick(event, x, y);
+        I.onclick(event, x, y);
       });
     }
     const draw = () => {
       oc = this._draw(width, height);
       pixelData = oc.getContext("2d").getImageData(0, 0, width, 1).data;
-      this._drawStops(r.stops, oc);
+      this._drawStops(this.stops, oc);
       ctx.drawImage(oc, 0, 0);
     };
     /** Return native this.format color data at given stop */
     const getColorAtStop = (stop: number) => this.colorData.map(n => n === -1 ? this.range[0] + stop : n);
     /** Return RGBA colour at a given x coordinate */
     const getRGBAColor = (x: number) => Array.from(pixelData.slice(x * 4, (x + 1) * 4)) as [number, number, number, number];
-    const csi = this.stops.length;
+    if (colorStopIndex === undefined) colorStopIndex = this.stops.length;
     const onclick: (event: MouseEvent, x: number, y: number) => void = () => { };
-    const r = { element: div, stops: [...this.stops], getColorAtStop, getRGBAColor, draw, onclick };
+    const destroy = () => {
+      canvas.remove();
+      let i = this.interactives.findIndex(i => i === I);
+      if (i !== -1) this.interactives.splice(i, 1);
+      for (let k in I) delete I[k];
+    };
+    const I = { element: div, getColorAtStop, getRGBAColor, draw, onclick, destroy } as IInteractiveSpectra;
+    this.interactives.push(I);
     draw();
-    return r;
+    return I;
   }
 }
 
@@ -554,8 +578,8 @@ export function getComplementaryHSL(h: number, s: number, l: number): [number, n
  * @params l: lightness range [0, 100]
  * @returns [HSL, HSL] where HSL is [h, s, l]
  */
-export function getSplitComplementary(h: number, s: number, l: number): [[number, number, number], [number, number, number]] {
-  return getAnalogous(...getComplementaryHSL(h, s, l));
+export function getSplitComplementary(h: number, s: number, l: number, θ?: number): [[number, number, number], [number, number, number]] {
+  return getAnalogous(...getComplementaryHSL(h, s, l), θ);
 }
 
 /**
@@ -604,6 +628,18 @@ export function getTriadic(h: number, s: number, l: number) {
   return getDivisions(3, h, s, l);
 }
 
+
+/**
+ * Rotate colour wheel +θ degrees
+ * @params h: hue range [0, 360]
+ * @params s: saturation range [0, 100]
+ * @params l: lightness range [0, 100]
+ * @params θ: angle in DEGREES
+ * @returns HSL: [h, s, l]
+ */
+export function rotateColor(h: number, s: number, l: number, θ): [number, number, number] {
+  return [((h + θ) % 360 + 360) % 360, s, l];
+}
 /**
  * Get analogous colours - colours next to this on the colours wheel +-θ
  * @params h: hue range [0, 360]
@@ -612,6 +648,45 @@ export function getTriadic(h: number, s: number, l: number) {
  * @params θ: angle in DEGREES
  * @returns [HSL-θ, HSL+θ] where HSL: [h, s, l]
  */
-export function getAnalogous(h: number, s: number, l: number, θ = 20): [[number, number, number], [number, number, number]] {
+export function getAnalogous(h: number, s: number, l: number, θ = 50): [[number, number, number], [number, number, number]] {
   return [[((h - θ) % 360 + 360) % 360, s, l], [((h + θ) % 360 + 360) % 360, s, l]];
+}
+
+/**
+ * Get rectangular colours - colours which create a rectangle on the color wheel
+ * @params h: hue range [0, 360]
+ * @params s: saturation range [0, 100]
+ * @params l: lightness range [0, 100]
+ * @params θ: angle in DEGREES for initial spin
+ * @returns [HSL, HSL, HSL, HSL] where HSL: [h, s, l]
+ */
+export function getRectangular(h: number, s: number, l: number, θ = 45) {
+  let colors: [number, number, number][] = [[h, s, l], getComplementaryHSL(h, s, l)];
+  colors.push(rotateColor(h, s, l, θ));
+  colors.push(getComplementaryHSL(...colors[colors.length - 1]));
+  return colors as [[number, number, number], [number, number, number], [number, number, number], [number, number, number]];
+}
+
+/**
+ * Get tones - decreasing saturation 100 to `l` in HSL
+ * @params h: hue range [0, 360]
+ * @params s: saturation range [0, 100] **ignored**
+ * @params l: lightness range [0, 100]
+ * @params d: decrease saturation by each color
+ * @returns HSL[] where HSL: [h, s, l]
+ */
+export function getTones(h: number, s: number, l: number, d = 10) {
+  return Array.from({ length: (100 - l) / d + 1 }, (_, j) => ([h, l + j * d, l])) as [number, number, number][];
+}
+
+/**
+ * Get shades - decreasing lightness value `l` to 0 in HSL
+ * @params h: hue range [0, 360]
+ * @params s: saturation range [0, 100]
+ * @params l: lightness range [0, 100]
+ * @params d: decrease lightness by each color
+ * @returns HSL[] where HSL: [h, s, l]
+ */
+export function getShades(h: number, s: number, l: number, d = 10) {
+  return Array.from({ length: l / d + 1 }, (_, j) => ([h, s, l - j * d])) as [number, number, number][];
 }
