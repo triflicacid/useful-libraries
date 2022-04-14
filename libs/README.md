@@ -12,10 +12,20 @@ These a general useful programs.
 
 **Dependencies**: *None*
 
+# `CanvasFilter.ts`
+**About**: A class for easily manipulating a `<canvas/>` filter
+
+**Dependencies**: *None*
+
 # `canvasUtils.ts`
 **About**: Utility function for HTML canvas
 
 **Dependencies**: `utils.ts`
+
+# `color-values.ts`
+**About**: Provides predefined paint colors and other useful color functions
+
+**Dependencies**: `color.ts`
 
 # `color.ts`
 **About**: Color conversion functions
@@ -39,6 +49,11 @@ These a general useful programs.
 
 # `Font.ts`
 **About**: A class for representing fonts.
+
+**Dependencies**: *None*
+
+# `ImageConvert.ts`
+**About**: A class for loading and converting between image formats *N.B. to BMP is not working*
 
 **Dependencies**: *None*
 
