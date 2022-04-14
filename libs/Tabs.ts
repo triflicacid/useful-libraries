@@ -10,7 +10,7 @@ export class Tabs {
   private _wrapper: HTMLDivElement; // Wrapper for tabs
   private _tabContainer: HTMLDivElement;
   private _map: TabMap;
-  private _openTab: string;
+  private _openTab: string | null;
   public onTabOpen: (tab: string) => void;
 
   /**
@@ -23,13 +23,14 @@ export class Tabs {
 
     // Check each tab has some associated content
     map.forEach((tab, name) => {
-      if (!(tab.content instanceof HTMLElement)) throw new TypeError(`Tabs: name '${name}' does not map to an html element -> ${tab.content}`);
+      if (!(tab.content instanceof HTMLElement)) throw new TypeError(`Tabs: name '${name}' does not map to an html element -> got type ${typeof tab.content}: ${tab.content}`);
     });
     this._map = map;
 
     // Container for tabs
     this._tabContainer = document.createElement('div');
     this._tabContainer.classList.add('tab-container');
+    this._openTab = null;
     const ctrl = this.generateController();
     if (pos === -1) ctrl.classList.add('pos-bottom');
     if (pos === 1) ctrl.classList.add('pos-top');
@@ -72,8 +73,8 @@ export class Tabs {
     if (this._openTab) this.close(this._openTab);
 
     this._openTab = name;
-    this._map.get(name).btn.dataset.open = "true";
-    this._tabContainer.appendChild(this._map.get(this._openTab).content); // Add tab content to document
+    ((this._map.get(name) as ITabInfo).btn as HTMLButtonElement).dataset.open = "true";
+    this._tabContainer.appendChild((this._map.get(this._openTab) as ITabInfo).content); // Add tab content to document
     this.onTabOpen(name);
   }
 
@@ -81,8 +82,8 @@ export class Tabs {
   public close(name: string) {
     if (!this._map.has(name)) throw new Error(`#<Tabs>.open: unknown tab reference '${name}'`);
     if (this._openTab === name) this._openTab = null;
-    const tab = this._map.get(name);
-    tab.btn.dataset.open = "false";
+    const tab = this._map.get(name) as ITabInfo;
+    (tab.btn as HTMLButtonElement).dataset.open = "false";
     tab.content.remove();// Remove tab content from document
   }
 
@@ -99,7 +100,7 @@ export class Tabs {
   public closeAll() {
     this._map.forEach((tab, name) => {
       tab.content.remove();
-      tab.btn.dataset.open = "false";
+      (tab.btn as HTMLButtonElement).dataset.open = "false";
     });
   }
 
