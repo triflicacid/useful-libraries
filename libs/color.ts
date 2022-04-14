@@ -19,7 +19,7 @@ export type NColorFormat = "rgb" | "rgba" | "hsl" | "hsv" | "cmyk";
 /** Numeric data for NColorFormat */
 export type NColorData = [number, number, number] | [number, number, number, number];
 /** Convert NColor to RGB */
-export type NColorToRGBFunc = (a: number, b: number, c: number, d?: number) => [number, number, number];
+export type NColorToRGBFunc = ((a: number, b: number, c: number) => [number, number, number]) | ((a: number, b: number, c: number, d: number) => [number, number, number]);
 export type ColorFormat = NColorFormat | "hex" | "hexa" | "css";
 
 /**
@@ -88,12 +88,12 @@ export function rgba2hexa(r: number, g: number, b: number, a: number): string {
  * @param hex - #RRGGBB
  * @returns RGB:[r [0, 255], g [0, 255], b [0, 255]]
 */
-export function hex2rgb(hex: string) {
+export function hex2rgb(hex: string): [number, number, number] {
   if (hex.match(/^#[0-9A-Fa-f]{6}$/) || hex.match(/^#[0-9A-Fa-f]{3}$/)) {
-    let rgb: string[] = hex.length === 4 ? hex.substring(1).match(/[0-9A-Fa-f]/g).map(x => x + x) : hex.substring(1).match(/[0-9A-Fa-f]{2}/g);
-    return rgb.map(hex => clamp(parseInt(hex, 16), 0, 255)) as [number, number, number];
+    let rgb = hex.length === 4 ? hex.substring(1).match(/[0-9A-Fa-f]/g)?.map(x => x + x) : hex.substring(1).match(/[0-9A-Fa-f]{2}/g);
+    return rgb == null ? [0, 0, 0] : rgb.map(hex => clamp(parseInt(hex, 16), 0, 255)) as [number, number, number];
   } else {
-    return [0, 0, 0] as [number, number, number];
+    return [0, 0, 0];
   }
 }
 
@@ -102,11 +102,15 @@ export function hex2rgb(hex: string) {
  * @param hexa - #RRGGBBAA
  * @returns RGB: [r [0, 255], g [0, 255], b [0, 255], a [0, 1]]
 */
-export function hexa2rgba(hexa: string) {
-  let parts: string[] = hexa.length === 5 ? hexa.substring(1).match(/[0-9A-Fa-f]/g).map(x => x + x) : hexa.substring(1).match(/[0-9A-Fa-f]{2}/g);
-  let rgba = parts.map(hex => clamp(parseInt(hex, 16), 0, 255)) as [number, number, number, number];
-  rgba[3] = nmap(rgba[3], 0, 255, 0, 1);
-  return rgba;
+export function hexa2rgba(hexa: string): [number, number, number, number] {
+  let parts = hexa.length === 5 ? hexa.substring(1).match(/[0-9A-Fa-f]/g)?.map(x => x + x) : hexa.substring(1).match(/[0-9A-Fa-f]{2}/g);
+  if (parts) {
+    let rgba = parts.map(hex => clamp(parseInt(hex, 16), 0, 255)) as [number, number, number, number];
+    rgba[3] = nmap(rgba[3], 0, 255, 0, 1);
+    return rgba;
+  } else {
+    return [0, 0, 0, 0];
+  }
 }
 
 /**
@@ -150,6 +154,7 @@ export function hsl2rgb(h: number, s: number, l: number): [number, number, numbe
   else if (180 <= h && h < 240) rgb = [0, x, c];
   else if (240 <= h && h < 300) rgb = [x, 0, c];
   else if (300 <= h && h < 360) rgb = [c, 0, x];
+  else return [0, 0, 0];
   return rgb.map(n => (n + m) * 255) as [number, number, number];
 }
 
@@ -236,6 +241,7 @@ export function hsv2rgb(h: number, s: number, v: number): [number, number, numbe
   else if (180 <= h && h < 240) rgb = [0, x, c];
   else if (240 <= h && h < 300) rgb = [x, 0, c];
   else if (300 <= h && h < 360) rgb = [c, 0, x];
+  else return [0, 0, 0];
   return rgb.map(n => (n + m) * 255) as [number, number, number];
 }
 
@@ -449,7 +455,7 @@ export class Spectrum {
   /** Draw black line when variable parameter are +-1 withing these values */
   public stops: number[];
   /** All createInteractive return objects */
-  public readonly interactives: IInteractiveSpectra[];
+  public readonly interactives: Set<IInteractiveSpectra>;
 
   /**
    * 
@@ -464,17 +470,18 @@ export class Spectrum {
     this.colorData = colorData;
     this.range = range;
     this.stops = [];
-    this.interactives = [];
+    this.interactives = new Set();
   }
 
   /** Draw background to offscreen canvas */
   private _draw(width: number, height: number) {
     const canvas = new OffscreenCanvas(width, height), ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("OffscreenCanvasRenderingContext2D not supported");
     const dv = (this.range[1] - this.range[0]) / width;
     for (let i = 0; i <= width; i++) {
       const v = this.range[0] + dv * i;
-      const cdata = this.colorData.map(n => isFinite(n) ? n : n < 0 ? v : this.range[1] - v) as [number, number, number];
-      const rgb = this._func ? this._func(...cdata) : cdata;
+      const cdata = this.colorData.map(n => isFinite(n) ? n : n < 0 ? v : this.range[1] - v);
+      const rgb = this._func ? this._func(cdata[0], cdata[1], cdata[2], cdata[3]) : cdata as [number, number, number];
       ctx.fillStyle = col2str("rgb", rgb);
       ctx.fillRect(i, 0, 1, height);
     }
@@ -483,6 +490,7 @@ export class Spectrum {
 
   private _drawStops(stops: number[], canvas: OffscreenCanvas) {
     const dv = (this.range[1] - this.range[0]) / canvas.width, ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("OffscreenCanvasRenderingContext2D not supported");
     for (let stop of stops) {
       ctx.fillStyle = "black";
       ctx.fillRect(stop / dv - 1, 0, 1, canvas.height);
@@ -498,8 +506,8 @@ export class Spectrum {
       if (markStops && this.stops.some(s => s - PM < v && v <= s + PM)) {
         ctx.fillStyle = "black";
       } else {
-        const cdata = this.colorData.map(n => isFinite(n) ? n : n < 0 ? v : this.range[1] - v) as [number, number, number];
-        const rgb = this._func ? this._func(...cdata) : cdata;
+        const cdata = this.colorData.map(n => isFinite(n) ? n : n < 0 ? v : this.range[1] - v);
+        const rgb = this._func ? this._func(cdata[0], cdata[1], cdata[2], cdata[3]) : cdata as [number, number, number];
         ctx.fillStyle = col2str("rgb", rgb);
       }
       ctx.fillRect(x + i, y, 1, height);
@@ -523,21 +531,21 @@ export class Spectrum {
     canvas.width = width;
     canvas.height = height;
     div.appendChild(canvas);
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
     let oc: OffscreenCanvas, pixelData: Uint8ClampedArray;
     let dv = (this.range[1] - this.range[0]) / width;
     if (addEvents) {
       canvas.style.cursor = "crosshair";
       canvas.addEventListener("mousedown", event => {
         const [x, y] = extractCoords(event);
-        this.stops[colorStopIndex] = x * dv;
+        this.stops[colorStopIndex as number] = x * dv;
         draw();
         I.onclick(event, x, y);
       });
     }
     const draw = () => {
       oc = this._draw(width, height);
-      pixelData = oc.getContext("2d").getImageData(0, 0, width, 1).data;
+      pixelData = (oc.getContext("2d") as OffscreenCanvasRenderingContext2D).getImageData(0, 0, width, 1).data;
       this._drawStops(this.stops, oc);
       ctx.drawImage(oc, 0, 0);
     };
@@ -545,16 +553,15 @@ export class Spectrum {
     const getColorAtStop = (stop: number) => this.colorData.map(n => n === -1 ? this.range[0] + stop : n);
     /** Return RGBA colour at a given x coordinate */
     const getRGBAColor = (x: number) => Array.from(pixelData.slice(x * 4, (x + 1) * 4)) as [number, number, number, number];
-    if (colorStopIndex === undefined) colorStopIndex = this.stops.length;
+    colorStopIndex ??= this.stops.length;
     const onclick: (event: MouseEvent, x: number, y: number) => void = () => { };
     const destroy = () => {
       canvas.remove();
-      let i = this.interactives.findIndex(i => i === I);
-      if (i !== -1) this.interactives.splice(i, 1);
-      for (let k in I) delete I[k];
+      this.interactives.delete(I);
+      for (let k in I) delete I[k as keyof typeof I];
     };
     const I = { element: div, getColorAtStop, getRGBAColor, draw, onclick, destroy } as IInteractiveSpectra;
-    this.interactives.push(I);
+    this.interactives.add(I);
     draw();
     return I;
   }
@@ -637,7 +644,7 @@ export function getTriadic(h: number, s: number, l: number) {
  * @params θ: angle in DEGREES
  * @returns HSL: [h, s, l]
  */
-export function rotateColor(h: number, s: number, l: number, θ): [number, number, number] {
+export function rotateColor(h: number, s: number, l: number, θ: number): [number, number, number] {
   return [((h + θ) % 360 + 360) % 360, s, l];
 }
 /**
@@ -668,7 +675,7 @@ export function getRectangular(h: number, s: number, l: number, θ = 45) {
 }
 
 /**
- * Get tones - decreasing saturation 100 to `l` in HSL
+ * Get tints - decreasing saturation 100 to 0 in HSL
  * @params h: hue range [0, 360]
  * @params s: saturation range [0, 100] **ignored**
  * @params l: lightness range [0, 100]
@@ -676,17 +683,54 @@ export function getRectangular(h: number, s: number, l: number, θ = 45) {
  * @returns HSL[] where HSL: [h, s, l]
  */
 export function getTones(h: number, s: number, l: number, d = 10) {
-  return Array.from({ length: (100 - l) / d + 1 }, (_, j) => ([h, l + j * d, l])) as [number, number, number][];
+  return Array.from({ length: 100 / d + 1 }, (_, j) => ([h, 100 - j * d, l])) as [number, number, number][];
+}
+
+
+/**
+ * Get tones - increasing lightness `l` to 100 in HSL
+ * @params h: hue range [0, 360]
+ * @params s: saturation range [0, 100]
+ * @params l: lightness range [0, 100] **ignored**
+ * @params d: decrease saturation by each color
+ * @returns HSL[] where HSL: [h, s, l]
+ */
+export function getTints(h: number, s: number, l: number, d = 10) {
+  return Array.from({ length: (100 - l) / d + 1 }, (_, j) => ([h, s, l + j * d])) as [number, number, number][];
+}
+
+/**
+ * Get tones - increasing lightness `l` to 100 in HSL
+ * @params h: hue range [0, 360]
+ * @params s: saturation range [0, 100]
+ * @params l: lightness range [0, 100] **ignored**
+ * @params n: number of colors to return
+ * @returns HSL[] where HSL: [h, s, l]
+ */
+export function getNTints(h: number, s: number, l: number, n = 10) {
+  return Array.from({ length: n }, (_, j) => ([h, s, l + (100 - l) / n * j])) as [number, number, number][];
 }
 
 /**
  * Get shades - decreasing lightness value `l` to 0 in HSL
  * @params h: hue range [0, 360]
  * @params s: saturation range [0, 100]
- * @params l: lightness range [0, 100]
+ * @params l: lightness range [0, 100] **ignored**
  * @params d: decrease lightness by each color
  * @returns HSL[] where HSL: [h, s, l]
  */
 export function getShades(h: number, s: number, l: number, d = 10) {
   return Array.from({ length: l / d + 1 }, (_, j) => ([h, s, l - j * d])) as [number, number, number][];
+}
+
+/**
+ * Get tones - decreasing lightness value `l` to 0 in HSL
+ * @params h: hue range [0, 360]
+ * @params s: saturation range [0, 100]
+ * @params l: lightness range [0, 100] **ignored**
+ * @params n: number of colors to return
+ * @returns HSL[] where HSL: [h, s, l]
+ */
+export function getNShades(h: number, s: number, l: number, n = 10) {
+  return Array.from({ length: n }, (_, j) => ([h, s, l - l / n * j])) as [number, number, number][];
 }
