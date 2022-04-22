@@ -91,6 +91,11 @@ For this, focus must be on the div. Arrows will change move the edit cursor. Pre
 
 **Dependencies**: *None*
 
+# `SocketManager.ts`
+**About**: Class which manages a socket connection
+
+**Dependencies**: *None*
+
 # `Sound.ts`
 **About**: Classes for manipulating/managing sounds.
 
