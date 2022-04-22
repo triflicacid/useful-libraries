@@ -15,7 +15,7 @@ export function extractCoords(event: MouseEvent) {
 }
 
 /** Color formats which are represented as numefical arrays */
-export type NColorFormat = "rgb" | "rgba" | "hsl" | "hsv" | "cmyk";
+export type NColorFormat = "rgb" | "rgba" | "hsl" | "hsv" | "cmyk" | "xyz";
 /** Numeric data for NColorFormat */
 export type NColorData = [number, number, number] | [number, number, number, number];
 /** Convert NColor to RGB */
@@ -25,7 +25,7 @@ export type ColorFormat = NColorFormat | "hex" | "hexa" | "css";
 /**
  * Given color format and array of values, return values in correct domain
  */
-export function clampValues(format: NColorFormat, values: number[]) {
+export function clampValues(format: NColorFormat | string, values: number[]) {
   switch (format) {
     case "rgb":
       return values.map(n => clamp(n, 0, 255));
@@ -42,21 +42,19 @@ export function clampValues(format: NColorFormat, values: number[]) {
 }
 
 /** Given a color format, return string representation */
-export function col2str(format: NColorFormat, values: NColorData, dp = 2): string {
-  values = clampValues(format, values).map(n => +n.toFixed(dp)) as NColorData;
+export function col2str(format: NColorFormat | string, values: NColorData, dp = 2): string {
+  values = clampValues(format, values).map(n => isFinite(dp) ? +n.toFixed(dp) : n) as NColorData;
   switch (format) {
-    case "rgb":
-      return "rgb(" + values.join(", ") + ")";
-    case "rgba":
-      return "rgba(" + values.join(", ") + ")";
     case "hsl":
-      return `hsl(${values[0]}, ${values[1]}%, ${values[2]}%)`;
+      return `hsl(${values[0]}°, ${values[1]}%, ${values[2]}%)`;
     case "hsv":
-      return `hsv(${values[0]}, ${values[1]}%, ${values[2]}%)`;
+      return `hsv(${values[0]}°, ${values[1]}%, ${values[2]}%)`;
     case "cmyk":
       return "cmyk(" + values.map(x => x + "%").join(", ") + ")";
+    case "lch":
+      return `lch(${values[0]}, ${values[1]}, ${values[2]}°)`;
     default:
-      return "";
+      return format + "(" + values.join(", ") + ")";
   }
 }
 
@@ -273,6 +271,211 @@ export function hsv2hsl(h: number, s: number, v: number): [number, number, numbe
   v = clamp(v, 0, 100) / 100;
   let l = v * (1 - s / 2), m = Math.min(l, 1 - l);
   return [h, (l === 0 || l === 1 ? 0 : (v - l) / m * 100), l * 100];
+}
+
+// type XYZIlluminant = "A" | "B" | "C" | "D50" | "D55" | "D65" | "D75" | "E" | "F1" | "F2" | "F3" | "F4" | "F5" | "F6" | "F7" | "F8" | "F9" | "F10" | "F11" | "F12";
+type XYZIlluminant = "A" | "B" | "C" | "D50" | "D55" | "D65" | "D75" | "E" | "F1" | "F2" | "F3" | "F4" | "F5" | "F6" | "F7" | "F8" | "F9" | "F10" | "F11" | "F12";
+type XYZObserver = 2 | 10;
+interface IXYZRefValue {
+  [illuminant: string]: { [observer: number]: [number, number, number] };
+}
+
+const XYZRefValues: IXYZRefValue = {
+  A:	{ 2: [9.850,	100.000,35.585], 10:	[111.144,	100.000,	35.200] },
+  B:	{ 2: [9.0927,	100.000,	85.313], 10:	[99.178, 100.000,	84,] },
+  C:	{ 2: [98.074,	100.000,	118.232], 10:	[97.285,	100.000,	116.145] },
+  D50:	{ 2: [96.422,	100.000,	82.521], 10:	[96.720,	100.000,	81.427] },
+  D55:	{ 2: [95.682,	100.000,	92.149], 10:	[95.799,	100.000,	90.926] },
+  D65:	{ 2: [95.047,	100.000,	108.883], 10:	[94.811,	100.000,	107.304] },
+  D75:	{ 2: [94.972,	100.000,	122.638], 10:	[94.416,	100.000,	120.641] },
+  E:	{ 2: [0.000,	100.000,	100.000], 10:	[100.000,	100.000,	100.000] },
+  F1:	{ 2: [92.834,	100.000,	103.665], 10:	[94.791,	100.000,	103.191] },
+  F2:	{ 2: [99.187,	100.000,	67.395], 10:	[103.280,	100.000,	69.026] },
+  F3:	{ 2: [3.754,	100.000,	49.861], 10:	[108.968,	100.000,	51.965] },
+  F4:	{ 2: [09.147,	100.000,	38.813], 10:	[114.961,	100.000,	40.963] },
+  F5:	{ 2: [90.872,	100.000,	98.723], 10:	[93.369,	100.000,	98.636] },
+  F6:	{ 2: [97.309,	100.000,	60.191], 10:	[102.148,	100.000,	62.074] },
+  F7:	{ 2: [95.044,	100.000,	108.755], 10:	[95.792,	100.000,	107.687] },
+  F8:	{ 2: [96.413,	100.000,	82.333], 10:	[97.115,	100.000,	81.135] },
+  F9:	{ 2: [0.365,	100.000,	67.868], 10:	[102.116,	100.000,	67.826] },
+  F10:	{ 2: [96.174,	100.000,	81.712], 10:	[99.001,	100.000,	83.134] },
+  F11:	{ 2: [0.966,	100.000,	64.370], 10:	[103.866,	100.000,	65.627] },
+  F12:	{ 2: [8.046,	100.000,	39.228], 10:	[111.428,	100.000,	40.353] },
+};
+
+/**
+ * Convert RGB to CIE-XYZ (D65/2deg)
+ * @params r: red range [0, 255]
+ * @params g: green range [0, 255]
+ * @params b: blue range [0, 255]
+ * @returns xyz: [x, y, z]
+ */
+export function rgb2xyz(r: number, g: number, b: number): [number, number, number] {
+  [r, g, b] = [r, g, b].map(n => clamp(n, 0, 255) / 255).map(n => 100 * (n > 0.04045 ? ((n + 0.055) / 1.055) ** 2.4 : n / 12.92));
+  return [
+    r * 0.4124 + g * 0.3576 + b * 0.1805,
+    r * 0.2126 + g * 0.7152 + b * 0.0722,
+    r * 0.0193 + g * 0.1192 + b * 0.9505
+  ];
+}
+
+/**
+ * Convert CIE-XYZ (D65/2deg) to RGB
+ * @params x
+ * @params y
+ * @params z
+ * @returns rgb: [r [0, 255], g [0, 255], b [0, 255]]
+ */
+export function xyz2rgb(x: number, y: number, z: number): [number, number, number] {
+  [x, y, z] = [x, y, z].map(n => n / 100);
+  return [
+    x * 3.2406 + y * -1.5372 + z * -0.4986,
+    x * -0.9689 + y * 1.8758 + z * 0.0415,
+    x * 0.0557 + y * -0.2040 + z * 1.0570
+  ].map(n => 255 * (n > 0.0031308 ? 1.055 * (n ** (1 / 2.4)) - 0.055 : 12.92 * n)) as [number, number, number];
+}
+
+/**
+ * Convert CIE-XYZ (D65/2deg default) to CIE-L*uv
+ * @params x
+ * @params y
+ * @params z
+ * @returns luv: [l, u, v]
+ */
+export function xyz2luv(x: number, y: number, z: number, ill: XYZIlluminant = "D65", obs: XYZObserver = 2): [number, number, number] {
+  let u = 4 * x / (x + 15 * y + 3 * z);
+  let v = 9 * y / (x + 15 * y + 3 * z);
+  y /= 100;
+  y = y > 0.008856 ? y ** (1 / 3) : (7.787 * y) + (16 / 116);
+
+  let ref = XYZRefValues[ill][obs],
+    refu = (4 * ref[0]) / (ref[0] + (15 * ref[1]) + (3 * ref[2])),
+    refv = (9 * ref[1]) / (ref[0] + (15 * ref[1]) + (3 * ref[2]));
+
+  let l = (116 * y) - 16;
+  u = 13 * l * (u - refu);
+  v = 13 * l * (v - refv);
+  return [l, u, v];
+}
+
+/**
+ * Convert CIE-L*uv to CIE-XYZ (D65/2deg default)v
+ * @params l
+ * @params u
+ * @params v
+ * @returns xyz: [x, y, z]
+ */
+export function luv2xyz(l: number, u: number, v: number, ill: XYZIlluminant = "D65", obs: XYZObserver = 2): [number, number, number] {
+  let y = (l + 16) / 116
+  y = y ** 3 > 0.008856 ? y ** 3 : (y - 16 / 116) / 7.787;
+
+  let ref = XYZRefValues[ill][obs],
+    refu = 4 * ref[0] / (ref[0] + 15 * ref[1] + 3 * ref[2]),
+    refv = 9 * ref[1] / (ref[0] + 15 * ref[1] + 3 * ref[2]);
+
+  u = u / (13 * l) + refu;
+  v = v / (13 * l) + refv;
+
+  y *= 100;
+  let x = -(9 * y * u) / ((u - 4) * v - u * v);
+  let z = (9 * y - (15 * v * y) - v * x) / (3 * v);
+  return [x, y, z];
+}
+
+/**
+ * Convert CIE-XYZ (D65/2deg default) to CIE-L*ab
+ * @params x
+ * @params y
+ * @params z
+ * @returns lab: [l, a, b]
+ */
+export function xyz2lab(x: number, y: number, z: number, ill: XYZIlluminant = "D65", obs: XYZObserver = 2): [number, number, number] {
+  [x, y, z] = [x, y, z].map((n, i) => n / XYZRefValues[ill][obs][i]).map(n => n > 0.008856 ? n ** (1 / 3) : (7.787 * n) + (16 / 116));
+  return [
+    (116 * y) - 16,
+    500 * (x - y),
+    200 * (y - z)
+  ];
+}
+
+/**
+ * Convert CIE-L*ab to CIE-XYZ (D65/2deg default)
+ * @params l
+ * @params a
+ * @params b
+ * @returns xyz: [x, y, z]
+ */
+export function lab2xyz(l: number, a: number, b: number, ill: XYZIlluminant = "D65", obs: XYZObserver = 2): [number, number, number] {
+  let y = (l + 16) / 116;
+  let x = a / 500 + y;
+  let z = y - b / 200;
+  return [x, y, z].map(n => n ** 3 > 0.008856 ? n ** 3 : (n - 16 / 116) / 7.787).map((n, i) => n * XYZRefValues[ill][obs][i]) as [number, number, number];
+}
+
+/**
+ * Convert CIE-XYZ (D65/2deg default) to Hunter-Lab
+ * @params x
+ * @params y
+ * @params z
+ * @returns lab: [l, a, b]
+ */
+export function xyz2hlab(x: number, y: number, z: number, ill: XYZIlluminant = "D65", obs: XYZObserver = 2): [number, number, number] {
+  let ref = XYZRefValues[ill][obs];
+  let Ka = (175 / 198.04) * (ref[1] + ref[0]);
+  let Kb = (70 / 218.11) * (ref[1] + ref[2]);
+
+  return [
+    100 * Math.sqrt(y / ref[1]),
+    Ka * (((x / ref[0]) - (y / ref[1])) / Math.sqrt(y / ref[1])),
+    Kb * (((y / ref[1]) - (z / ref[2])) / Math.sqrt(y / ref[1]))
+  ];
+}
+
+/**
+ * Convert Hunter-Lab to CIE-XYZ (D65/2deg default)
+ * @params l
+ * @params a
+ * @params b
+ * @returns xyz: [x, y, z]
+ */
+export function hlab2xyz(l: number, a: number, b: number, ill: XYZIlluminant = "D65", obs: XYZObserver = 2): [number, number, number] {
+  let ref = XYZRefValues[ill][obs];
+  let Ka = (175 / 198.04) * (ref[1] + ref[0]);
+  let Kb = (70 / 218.11) * (ref[1] + ref[2]);
+
+  let y = ((l / ref[1]) ** 2) * 100;
+  let x = (a / Ka * Math.sqrt(y / ref[1]) + (y / ref[1])) * ref[0];
+  let z = - (b / Kb * Math.sqrt(y / ref[1]) - (y / ref[1])) * ref[2];
+  return [x, y, z];
+}
+
+/**
+ * Convert CIE-L*ab to CIE-L*Ch(ab) (D65/2deg)
+ * @params l
+ * @params a
+ * @params b
+ * @returns lch: [l, c, h [0, 360] ]
+ */
+export function lab2lch(l: number, a: number, b: number): [number, number, number] {
+  let h = Math.atan2(b, a);
+  h = h > 0 ? (h / Math.PI) * 180 : 360 - (Math.abs(h) / Math.PI) * 180;
+  return [l, Math.hypot(a, b), h];
+}
+
+/**
+ * Convert CIE-L*Ch(ab) to CIE-L*ab (D65/2deg)
+ * @params l
+ * @params c
+ * @params h range [0, 360]
+ * @returns lab: [l, a, b]
+ */
+export function lch2lab(l: number, c: number, h: number): [number, number, number] {
+  let r = h * Math.PI / 180;
+  return [
+    l,
+    Math.cos(r) * c,
+    Math.sin(r) * c
+  ];
 }
 
 /** Dictionary of CSS colors */

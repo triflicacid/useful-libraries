@@ -2,53 +2,19 @@
 // import { erf } from "./libs/maths/error-function";
 // import { cubic, depressed_cubic } from "./libs/maths/polynomial";
 
-import { ImageConvert } from "./libs/ImageConvert";
-
 // // console.log(cubic(new Complex(2), new Complex(-8), new Complex(1.5), new Complex(69)));
 // console.log(erf(new Complex(1, -2)).toString());
 
-const canvas = document.createElement("canvas");
-document.body.appendChild(canvas);
-canvas.width = 750;
-canvas.height = 500;
-canvas.style.border = "1px solid black";
+import * as col from "./libs/color";
 
-let K: ImageConvert;
+const div = document.createElement("div");
+document.body.appendChild(div);
 
-let p = document.createElement("p");
-document.body.appendChild(p);
-let btn = document.createElement("button");
-btn.innerText = "Upload";
-btn.addEventListener("click", () => upload.click());
-p.appendChild(btn);
-let upload = document.createElement("input");
-upload.type = "file";
-upload.addEventListener("change", async () => {
-  let file = upload.files?.[0];
-  if (file) {
-    let blob = new Blob([file]);
-    K = await ImageConvert.fromDataURL(URL.createObjectURL(blob));
-    console.log(K)
-    K.drawToCanvas(canvas, canvas.width, canvas.height);
-  }
-});
-
-btn = document.createElement("button");
-btn.innerText = "Download Image";
-let downloadAs: string = "image/png";
-btn.addEventListener("click", async () => {
-  let url = await K.toDataURL(downloadAs as any);
-  let link = document.createElement("a");
-  link.href = url;
-  link.download = "image." + downloadAs.substring(6);
-  link.click();
-});
-let select = document.createElement("select");
-select.insertAdjacentHTML("beforeend", "<option value='image/png'>PNG</option>");
-select.insertAdjacentHTML("beforeend", "<option value='image/jpeg'>JPEG</option>");
-select.insertAdjacentHTML("beforeend", "<option value='image/webp'>WEBP</option>");
-select.insertAdjacentHTML("beforeend", "<option value='image/bmp'>Bitmap</option>");
-select.addEventListener("change", () => downloadAs = select.value);
-p.appendChild(btn);
-p.insertAdjacentHTML("beforeend", " as ");
-p.appendChild(select);
+let arr = [255, 0, 128] as [number, number, number];
+div.insertAdjacentHTML("beforeend", `<p>${col.col2str("rgb", arr, Infinity)}</p>`);
+arr = col.rgb2xyz(...arr);
+div.insertAdjacentHTML("beforeend", `<p>${col.col2str("xyz", arr, Infinity)}</p>`);
+arr = col.xyz2hlab(...arr);
+div.insertAdjacentHTML("beforeend", `<p>${col.col2str("hunter-lab", arr, Infinity)}</p>`);
+arr = col.hlab2xyz(...arr);
+div.insertAdjacentHTML("beforeend", `<p>${col.col2str("xyz", arr, Infinity)}</p>`);
