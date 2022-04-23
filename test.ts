@@ -6,6 +6,3 @@
 // console.log(erf(new Complex(1, -2)).toString());
 
 import * as col from "./libs/color";
-import * as colCommon from "./libs/prefined-colors/common";
-
-console.log(colCommon.toColorSeries());

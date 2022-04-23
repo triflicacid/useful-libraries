@@ -281,26 +281,26 @@ interface IXYZRefValue {
 }
 
 const XYZRefValues: IXYZRefValue = {
-  A:	{ 2: [9.850,	100.000,35.585], 10:	[111.144,	100.000,	35.200] },
-  B:	{ 2: [9.0927,	100.000,	85.313], 10:	[99.178, 100.000,	84,] },
-  C:	{ 2: [98.074,	100.000,	118.232], 10:	[97.285,	100.000,	116.145] },
-  D50:	{ 2: [96.422,	100.000,	82.521], 10:	[96.720,	100.000,	81.427] },
-  D55:	{ 2: [95.682,	100.000,	92.149], 10:	[95.799,	100.000,	90.926] },
-  D65:	{ 2: [95.047,	100.000,	108.883], 10:	[94.811,	100.000,	107.304] },
-  D75:	{ 2: [94.972,	100.000,	122.638], 10:	[94.416,	100.000,	120.641] },
-  E:	{ 2: [0.000,	100.000,	100.000], 10:	[100.000,	100.000,	100.000] },
-  F1:	{ 2: [92.834,	100.000,	103.665], 10:	[94.791,	100.000,	103.191] },
-  F2:	{ 2: [99.187,	100.000,	67.395], 10:	[103.280,	100.000,	69.026] },
-  F3:	{ 2: [3.754,	100.000,	49.861], 10:	[108.968,	100.000,	51.965] },
-  F4:	{ 2: [09.147,	100.000,	38.813], 10:	[114.961,	100.000,	40.963] },
-  F5:	{ 2: [90.872,	100.000,	98.723], 10:	[93.369,	100.000,	98.636] },
-  F6:	{ 2: [97.309,	100.000,	60.191], 10:	[102.148,	100.000,	62.074] },
-  F7:	{ 2: [95.044,	100.000,	108.755], 10:	[95.792,	100.000,	107.687] },
-  F8:	{ 2: [96.413,	100.000,	82.333], 10:	[97.115,	100.000,	81.135] },
-  F9:	{ 2: [0.365,	100.000,	67.868], 10:	[102.116,	100.000,	67.826] },
-  F10:	{ 2: [96.174,	100.000,	81.712], 10:	[99.001,	100.000,	83.134] },
-  F11:	{ 2: [0.966,	100.000,	64.370], 10:	[103.866,	100.000,	65.627] },
-  F12:	{ 2: [8.046,	100.000,	39.228], 10:	[111.428,	100.000,	40.353] },
+  A: { 2: [9.850, 100.000, 35.585], 10: [111.144, 100.000, 35.200] },
+  B: { 2: [9.0927, 100.000, 85.313], 10: [99.178, 100.000, 84,] },
+  C: { 2: [98.074, 100.000, 118.232], 10: [97.285, 100.000, 116.145] },
+  D50: { 2: [96.422, 100.000, 82.521], 10: [96.720, 100.000, 81.427] },
+  D55: { 2: [95.682, 100.000, 92.149], 10: [95.799, 100.000, 90.926] },
+  D65: { 2: [95.047, 100.000, 108.883], 10: [94.811, 100.000, 107.304] },
+  D75: { 2: [94.972, 100.000, 122.638], 10: [94.416, 100.000, 120.641] },
+  E: { 2: [0.000, 100.000, 100.000], 10: [100.000, 100.000, 100.000] },
+  F1: { 2: [92.834, 100.000, 103.665], 10: [94.791, 100.000, 103.191] },
+  F2: { 2: [99.187, 100.000, 67.395], 10: [103.280, 100.000, 69.026] },
+  F3: { 2: [3.754, 100.000, 49.861], 10: [108.968, 100.000, 51.965] },
+  F4: { 2: [09.147, 100.000, 38.813], 10: [114.961, 100.000, 40.963] },
+  F5: { 2: [90.872, 100.000, 98.723], 10: [93.369, 100.000, 98.636] },
+  F6: { 2: [97.309, 100.000, 60.191], 10: [102.148, 100.000, 62.074] },
+  F7: { 2: [95.044, 100.000, 108.755], 10: [95.792, 100.000, 107.687] },
+  F8: { 2: [96.413, 100.000, 82.333], 10: [97.115, 100.000, 81.135] },
+  F9: { 2: [0.365, 100.000, 67.868], 10: [102.116, 100.000, 67.826] },
+  F10: { 2: [96.174, 100.000, 81.712], 10: [99.001, 100.000, 83.134] },
+  F11: { 2: [0.966, 100.000, 64.370], 10: [103.866, 100.000, 65.627] },
+  F12: { 2: [8.046, 100.000, 39.228], 10: [111.428, 100.000, 40.353] },
 };
 
 /**
@@ -640,7 +640,7 @@ export function bestTextColor(rgb: [number, number, number], n = 100) {
   return (rgb[0] * 0.299 + rgb[1] * 0.587 + rgb[2] * 0.114) > n ? "black" : "white";
 }
 
-export interface IInteractiveSpectra {
+export interface IInteractiveSpectra1D {
   element: HTMLDivElement;
   draw: () => void;
   destroy: () => void;
@@ -650,7 +650,7 @@ export interface IInteractiveSpectra {
 }
 
 /** Represent a color spectrum with one changing variable */
-export class Spectrum {
+export class Spectrum_1D {
   public readonly format: NColorFormat;
   public colorData: NColorData;
   public range: [number, number];
@@ -658,12 +658,12 @@ export class Spectrum {
   /** Draw black line when variable parameter are +-1 withing these values */
   public stops: number[];
   /** All createInteractive return objects */
-  public readonly interactives: Set<IInteractiveSpectra>;
+  public readonly interactives: Set<IInteractiveSpectra1D>;
 
   /**
    * 
    * @param format Color format
-   * @param colorData Color data. Use +-Infinity for placeholder for values which will vary. `-Infinity` values vary range[0] to range[1]. `+Infinity` values vary range[1] to range[0].
+   * @param colorData Color data. Use NaN for placeholder for values which will vary
    * @param range Range of values to take for varying parameter
    * @param funcToRGB Function - convert colorData to RGB color value. Not needed if format is `rgb` or `rgba`
    */
@@ -683,7 +683,7 @@ export class Spectrum {
     const dv = (this.range[1] - this.range[0]) / width;
     for (let i = 0; i <= width; i++) {
       const v = this.range[0] + dv * i;
-      const cdata = this.colorData.map(n => isFinite(n) ? n : n < 0 ? v : this.range[1] - v);
+      const cdata = this.colorData.map(n => isNaN(n) ? v : n);
       const rgb = this._func ? this._func(cdata[0], cdata[1], cdata[2], cdata[3]) : cdata as [number, number, number];
       ctx.fillStyle = col2str("rgb", rgb);
       ctx.fillRect(i, 0, 1, height);
@@ -701,20 +701,9 @@ export class Spectrum {
   }
 
   /** Render to a canvas context */
-  public drawToCanvas(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, markStops = true) {
-    let dv = (this.range[1] - this.range[0]) / width;
-    const PM = dv / 2;
-    for (let i = 0; i <= width; i++) {
-      const v = this.range[0] + dv * i;
-      if (markStops && this.stops.some(s => s - PM < v && v <= s + PM)) {
-        ctx.fillStyle = "black";
-      } else {
-        const cdata = this.colorData.map(n => isFinite(n) ? n : n < 0 ? v : this.range[1] - v);
-        const rgb = this._func ? this._func(cdata[0], cdata[1], cdata[2], cdata[3]) : cdata as [number, number, number];
-        ctx.fillStyle = col2str("rgb", rgb);
-      }
-      ctx.fillRect(x + i, y, 1, height);
-    }
+  public drawToCanvas(ctx: CanvasRenderingContext2D, width: number, height: number, x = 0, y = 0, markStops = true) {
+    let oc = this.drawToOffscreenCanvas(width, height, markStops);
+    ctx.drawImage(oc, x, y);
   }
 
   /** Render to an offscreen canvas */
@@ -763,7 +752,144 @@ export class Spectrum {
       this.interactives.delete(I);
       for (let k in I) delete I[k as keyof typeof I];
     };
-    const I = { element: div, getColorAtStop, getRGBAColor, draw, onclick, destroy } as IInteractiveSpectra;
+    const I = { element: div, getColorAtStop, getRGBAColor, draw, onclick, destroy } as IInteractiveSpectra1D;
+    this.interactives.add(I);
+    draw();
+    return I;
+  }
+}
+
+export interface IInteractiveSpectra2D {
+  element: HTMLDivElement;
+  draw: () => void;
+  destroy: () => void;
+  getRGBAColor: (x: number, y: number) => [number, number, number, number]
+  onclick: (e: MouseEvent, x: number, y: number) => void;
+}
+
+export class Spectrum_2D {
+  public readonly format: NColorFormat;
+  public colorData: NColorData;
+  public range1: [number, number];
+  public range2: [number, number];
+  private _index1: number;
+  private _index2: number;
+  private readonly _func: NColorToRGBFunc | undefined;
+  /** Draw black circle at selected point */
+  public stops: [number, number][];
+  /** All createInteractive return objects */
+  public readonly interactives: Set<IInteractiveSpectra2D>;
+
+  /**
+   * 
+   * @param format Color format
+   * @param colorData Color data. Use NaN for placeholder for values which will vary
+   * @param range Range of values to take for varying parameter
+   * @param funcToRGB Function - convert colorData to RGB color value. Not needed if format is `rgb` or `rgba`
+   */
+  constructor(format: NColorFormat, colorData: NColorData, range1: [number, number], range2: [number, number], funcToRGB?: NColorToRGBFunc) {
+    for (let i = 0; i < colorData.length; ++i) {
+      if (isNaN(colorData[i])) {
+        if (this._index1 === undefined) this._index1 = i;
+        else this._index2 = i;
+      }
+    }
+    if (this._index1 === undefined || this._index2 === undefined) throw new Error("2 unique NaNs must be passed");
+    this.format = format;
+    this._func = funcToRGB;
+    this.colorData = colorData;
+    this.range1 = range1;
+    this.range2 = range2;
+    this.stops = [];
+    this.interactives = new Set();
+  }
+
+  /** Create image data */
+  private _draw(width: number, height: number) {
+    const dv1 = (this.range1[1] - this.range1[0]) / width;
+    const dv2 = (this.range2[1] - this.range2[0]) / height;
+    const imgData = new ImageData(width, height);
+    let cdata = [...this.colorData];
+    for (let i = 0; i <= width; i++) {
+      cdata[this._index1] = this.range1[0] + dv1 * i;
+      for (let j = 0; j <= height; j++) {
+        cdata[this._index2] = this.range2[0] + dv2 * j;
+        const rgb = this._func ? this._func(cdata[0], cdata[1], cdata[2], cdata[3]) : cdata as [number, number, number];
+        let k = 4 * ((height - j) * width + i);
+        imgData.data[k] = rgb[0];
+        imgData.data[++k] = rgb[1];
+        imgData.data[++k] = rgb[2];
+        imgData.data[++k] = 0xff;
+      }
+    }
+    return imgData;
+  }
+
+  private _drawStops(stops: [number, number][], data: ImageData) {
+    for (let [x, y] of stops) {
+      let k = 4 * (y * data.width + x);
+      data.data[k] = 0;
+      data.data[++k] = 0;
+      data.data[++k] = 0;
+      data.data[++k] = 0xff;
+    }
+  }
+
+  /** Render to a canvas context */
+  public drawToCanvas(ctx: CanvasRenderingContext2D, width: number, height: number, x = 0, y = 0, markStops = true) {
+    const data = this._draw(width, height);
+    if (markStops) this._drawStops(this.stops, data);
+    ctx.putImageData(data, x, y);
+  }
+
+  /** Render to an offscreen canvas */
+  public drawToOffscreenCanvas(width: number, height: number, markStops = true) {
+    const data = this._draw(width, height);
+    if (markStops) this._drawStops(this.stops, data);
+    const oc = new OffscreenCanvas(width, height), ctx = oc.getContext("2d") as OffscreenCanvasRenderingContext2D;
+    ctx.putImageData(data, 0, 0);
+    return oc;
+  }
+
+  /** Create and return interactive environment. Color stops are provided through return object. Calls 'onclick' whenever click event is caught */
+  public createInteractive(width: number, height: number, colorStopIndex?: number, el: "div" | "span" = "div", addEvents = true) {
+    const div = document.createElement(el);
+    div.style.width = width + "px";
+    div.style.height = height + "px";
+    div.classList.add("color-spectrum");
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    div.appendChild(canvas);
+    const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
+    let imageData: ImageData;
+    if (addEvents) {
+      canvas.style.cursor = "crosshair";
+      canvas.addEventListener("mousedown", event => {
+        const [x, y] = extractCoords(event);
+        this.stops[colorStopIndex as number] = [x, y];
+        draw();
+        I.onclick(event, x, y);
+      });
+    }
+    const draw = () => {
+      imageData = this._draw(width, height);
+      // this._drawStops(this.stops, imageData);
+      ctx.putImageData(imageData, 0, 0);
+    };
+    /** Return RGBA colour at a given x coordinate */
+    const getRGBAColor = (x: number, y: number) => {
+      let i = 4 * (y * imageData.width + x);
+      return Array.from(imageData.data.slice(i, i + 4)) as [number, number, number, number];
+    };
+    colorStopIndex ??= this.stops.length;
+    const onclick: (event: MouseEvent, x: number, y: number) => void = () => { };
+    const destroy = () => {
+      canvas.remove();
+      this.interactives.delete(I);
+      for (let k in I) delete I[k as keyof typeof I];
+    };
+    const I = { element: div, getRGBAColor, draw, onclick, destroy } as IInteractiveSpectra2D;
     this.interactives.add(I);
     draw();
     return I;

@@ -16,8 +16,8 @@ function listCssColors() {
   }
 }
 
-function colorSpectra() {
-  const spectrum = new col.Spectrum("hsl", [-Infinity, 100, 50], [0, 360], col.hsl2rgb);
+function colorSpectra1D() {
+  const spectrum = new col.Spectrum_1D("hsl", [-Infinity, 100, 50], [0, 360], col.hsl2rgb);
 
   const d = spectrum.createInteractive(600, 400);
   document.body.appendChild(d.element);
@@ -26,6 +26,26 @@ function colorSpectra() {
     let rgba = d.getRGBAColor(x), str = col.col2str("rgba", rgba);
     div.style.backgroundColor = str;
     span.innerText = col.rgba2hexa(...rgba);
+  }
+  const div = document.createElement("div");
+  div.style.width = div.style.height = "50px";
+  div.style.border = "1px solid black";
+  document.body.appendChild(div);
+  const span = document.createElement("span");
+  document.body.appendChild(span);
+}
+
+function colorSpectra2D() {
+  const spectrum = new col.Spectrum_2D("cmyk", [0, NaN, NaN, 0], [0, 100], [0, 100], col.cmyk2rgb);
+  const d = spectrum.createInteractive(600, 400);
+  document.body.appendChild(d.element);
+  d.element.style.border = "1px solid black";
+  d.onclick = (e, x, y) => {
+    let rgb = d.getRGBAColor(x, y);
+    rgb.pop();
+    let str = col.col2str("rgb", rgb);
+    div.style.backgroundColor = str;
+    span.innerText = col.rgb2hex(rgb[0], rgb[1], rgb[2]);
   }
   const div = document.createElement("div");
   div.style.width = div.style.height = "50px";
