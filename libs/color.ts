@@ -15,7 +15,7 @@ export function extractCoords(event: MouseEvent) {
 }
 
 /** Color formats which are represented as numefical arrays */
-export type NColorFormat = "rgb" | "rgba" | "hsl" | "hsv" | "cmyk" | "xyz" | "lab" | "lch" | "hlab";
+export type NColorFormat = "rgb" | "rgba" | "hsl" | "hsv" | "cmyk" | "xyz" | "xyY" | "lab" | "lch" | "hlab" | "lms";
 /** Numeric data for NColorFormat */
 export type NColorData = [number, number, number] | [number, number, number, number];
 /** Convert NColor to RGB */
@@ -35,6 +35,7 @@ export function clampValues(format: NColorFormat | string, values: number[]) {
     case "hsv":
       return [clamp(values[0], 0, 360), clamp(values[1], 0, 100), clamp(values[2], 0, 100)];
     case "cmyk":
+    case "cmy":
       return values.map(x => clamp(x, 0, 100));
     default:
       return values;
@@ -51,6 +52,8 @@ export function col2str(format: NColorFormat | string, values: NColorData, dp = 
       return `hsv(${values[0]}°, ${values[1]}%, ${values[2]}%)`;
     case "cmyk":
       return "cmyk(" + values.map(x => x + "%").join(", ") + ")";
+    case "cmy":
+      return "cmy(" + values.map(x => x + "%").join(", ") + ")";
     case "lch":
       return `lch(${values[0]}, ${values[1]}, ${values[2]}°)`;
     default:
@@ -178,9 +181,7 @@ export function css2rgb(css: string): number[] {
  * @returns cmyk: [c [0, 100], m [0, 100], y [0, 100], k [0, 100]]
  */
 export function rgb2cmyk(r: number, g: number, b: number): [number, number, number, number] {
-  r = clamp(r === 0 ? 1 : r, 0, 255) / 255;
-  g = clamp(g === 0 ? 1 : g, 0, 255) / 255;
-  b = clamp(b === 0 ? 1 : b, 0, 255) / 255;
+  [r, g, b] = [r, g, b].map(n => n === 0 ? 0 : clamp(n, 0, 255) / 255);
   let k = 1 - Math.max(r, g, b);
   return [((1 - r - k) / (1 - k)) * 100, ((1 - g - k) / (1 - k)) * 100, ((1 - b - k) / (1 - k)) * 100, k * 100];
 }
@@ -196,6 +197,54 @@ export function rgb2cmyk(r: number, g: number, b: number): [number, number, numb
 export function cmyk2rgb(c: number, m: number, y: number, k: number): [number, number, number] {
   ([c, m, y, k] = [c, m, y, k].map(n => clamp(n, 0, 100) / 100)); // [0, 100] -> [0, 1]
   return [255 * (1 - c) * (1 - k), 255 * (1 - m) * (1 - k), 255 * (1 - y) * (1 - k)];
+}
+
+/**
+ * Convert RGB to CMY
+ * @params r: red range [0, 255]
+ * @params g: green range [0, 255]
+ * @params b: blue range [0, 255]
+ * @returns cmy: [c [0, 100], m [0, 100], y [0, 100]]
+ */
+export function rgb2cmy(r: number, g: number, b: number): [number, number, number] {
+  return [r, g, b].map(n => 100 * (1 - clamp(n, 0, 255) / 255)) as [number, number, number];
+}
+
+/**
+ * Convert CMY to RGB
+ * @params c: cyan range [0, 100]
+ * @params m: magents range [0, 100]
+ * @params y: yellow range [0, 100]
+ * @returns rgb: [r [0, 255], g [0, 255], b [0, 255]]
+ */
+export function cmy2rgb(c: number, m: number, y: number): [number, number, number] {
+  return [c, m, y].map(n => 255 * (1 - clamp(n, 0, 100) / 100)) as [number, number, number];
+}
+
+/**
+ * Convert CMYK to CMY
+ * @params c: cyan range [0, 100]
+ * @params m: meganta range [0, 100]
+ * @params y: yellow range [0, 100]
+ * @params k: black range [0, 100]
+ * @returns cmy: [c [0, 100], m [0, 100], y [0, 100]]
+ */
+export function cmyk2cmy(c: number, m: number, y: number, k: number): [number, number, number] {
+  return k === 0 ? [c, m, y] : [c, m, y].map(n => (n * (100 - k) + k)) as [number, number, number];
+}
+
+/**
+ * Convert CMY to CMYK
+ * @params c: cyan range [0, 100]
+ * @params m: meganta range [0, 100]
+ * @params y: yellow range [0, 100]
+ * @returns cmyk: [c [0, 100], m [0, 100], y [0, 100], k [0, 100]]
+ */
+export function cmy2cmyk(c: number, m: number, y: number): [number, number, number, number] {
+  ([c, m, y] = [c, m, y].map(n => clamp(n, 0, 100) / 100)); // [0, 100] -> [0, 1]
+  let C: number, M: number, Y: number, K = Math.min(c, m, y);
+  [C, M, Y] = K === 1 ? [0, 0, 0] : [c, m, y].map(n => 100 * (n - K) / (1 - K));
+  return [C, M, Y, K * 100];
 }
 
 /**
@@ -292,7 +341,7 @@ const XYZRefValues: IXYZRefValue = {
   F1: { 2: [92.834, 100.000, 103.665], 10: [94.791, 100.000, 103.191] },
   F2: { 2: [99.187, 100.000, 67.395], 10: [103.280, 100.000, 69.026] },
   F3: { 2: [3.754, 100.000, 49.861], 10: [108.968, 100.000, 51.965] },
-  F4: { 2: [09.147, 100.000, 38.813], 10: [114.961, 100.000, 40.963] },
+  F4: { 2: [9.147, 100.000, 38.813], 10: [114.961, 100.000, 40.963] },
   F5: { 2: [90.872, 100.000, 98.723], 10: [93.369, 100.000, 98.636] },
   F6: { 2: [97.309, 100.000, 60.191], 10: [102.148, 100.000, 62.074] },
   F7: { 2: [95.044, 100.000, 108.755], 10: [95.792, 100.000, 107.687] },
@@ -855,13 +904,14 @@ export class Spectrum_2D {
    * @param funcToRGB Function - convert colorData to RGB color value. Not needed if format is `rgb` or `rgba`
    */
   constructor(format: NColorFormat, colorData: NColorData, range1: [number, number], range2: [number, number], funcToRGB?: NColorToRGBFunc) {
+    this._index1 = this._index2 = -1;
     for (let i = 0; i < colorData.length; ++i) {
       if (isNaN(colorData[i])) {
-        if (this._index1 === undefined) this._index1 = i;
+        if (this._index1 === -1) this._index1 = i;
         else this._index2 = i;
       }
     }
-    if (this._index1 === undefined || this._index2 === undefined) throw new Error("2 unique NaNs must be passed");
+    if (this._index1 === -1 || this._index2 === -1) throw new Error("2 unique NaNs must be passed");
     this.format = format;
     this._func = funcToRGB;
     this.colorData = colorData;

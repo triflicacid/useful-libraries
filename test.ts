@@ -13,13 +13,11 @@ window.col = col;
 let div = document.createElement("div");
 document.body.appendChild(div);
 
-const MIN = 5, MAX = 10;
-let data = Array.from({ length: 200 }, () => Math.floor(Math.random() * (MAX - MIN)) + MIN);
-let sum = data.reduce((a, b) => a + b);
-div.insertAdjacentHTML("beforeend", `<p>Original: <code>${data.join(", ")}</code> | Sum = ${sum} | Min = ${Math.min(...data)} | Max = ${Math.max(...data)}</p>`);
-
-data = normalise(...data);
-div.insertAdjacentHTML("beforeend", `<p>Normalised: <code>${data.join(", ")}</code> | Sum = ${data.reduce((a, b) => a + b)} | Min = ${Math.min(...data)} | Max = ${Math.max(...data)}</p>`);
-
-data = denormalise(sum, ...data);
-div.insertAdjacentHTML("beforeend", `<p>De-Normalised: <code>${data.join(", ")}</code> | Sum = ${data.reduce((a, b) => a + b)} | Min = ${Math.min(...data)} | Max = ${Math.max(...data)}</p>`);
+let arr = [0, 0, 128];
+div.insertAdjacentHTML("beforeend", `<p>${col.col2str("rgb", arr, Infinity)}</p>`);
+arr = col.rgb2cmy(...arr);
+div.insertAdjacentHTML("beforeend", `<p>${col.col2str("cmy", arr, Infinity)}</p>`);
+arr = col.cmy2cmyk(...arr);
+div.insertAdjacentHTML("beforeend", `<p>${col.col2str("cmyk", arr, Infinity)}</p>`);
+div.insertAdjacentHTML("beforeend", `<p>${col.col2str("rgb", col.cmyk2rgb(...arr), Infinity)}</p>`);
+div.insertAdjacentHTML("beforeend", `<p>${col.col2str("cmy", col.cmyk2cmy(...arr), Infinity)}</p>`); 
