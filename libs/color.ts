@@ -15,7 +15,7 @@ export function extractCoords(event: MouseEvent) {
 }
 
 /** Color formats which are represented as numefical arrays */
-export type NColorFormat = "rgb" | "rgba" | "hsl" | "hsv" | "cmyk" | "xyz";
+export type NColorFormat = "rgb" | "rgba" | "hsl" | "hsv" | "cmyk" | "xyz" | "lab" | "lch" | "hlab";
 /** Numeric data for NColorFormat */
 export type NColorData = [number, number, number] | [number, number, number, number];
 /** Convert NColor to RGB */
@@ -336,6 +336,30 @@ export function xyz2rgb(x: number, y: number, z: number): [number, number, numbe
 }
 
 /**
+ * Convert CIE-XYZ (D65/2deg) to CIE-xyY
+ * @params x
+ * @params y
+ * @params z
+ * @returns xyY: [x, y, Y]
+ */
+export function xyz2xyY(x: number, y: number, z: number): [number, number, number] {
+  return [x / (x + y + z), y / (x + y + z), y];
+}
+
+/**
+ * Convert CIE-xyY to CIE-XYZ (D65/2deg)
+ * @params x
+ * @params y
+ * @params Y
+ * @returns XYZ: [x, y, z]
+ */
+export function xyY2xyz(x: number, y: number, Y: number): [number, number, number] {
+  let X = x * (Y / y);
+  let Z = (Y / y) * (1 - x - y)
+  return [X, Y, Z];
+}
+
+/**
  * Convert CIE-XYZ (D65/2deg default) to CIE-L*uv
  * @params x
  * @params y
@@ -477,6 +501,49 @@ export function lch2lab(l: number, c: number, h: number): [number, number, numbe
     Math.sin(r) * c
   ];
 }
+
+/**
+ * Convert LMS to CIE-XYZ
+ * @params l - long, range [0, 100] **if normalised**
+ * @params m - medium, range [0, 100] **if normalised**
+ * @params s - short, range [0, 100] **if normalised**
+ * @params normalised - true: use D65 matrix, else use equal-energy matrix
+ * @return xyz - [x, y, z]
+ */
+export function lms2xyz(l: number, m: number, s: number, normalised = true): [number, number, number] {
+  return normalised ? [
+    1.860066613 * l + -1.129480078 * m + 0.219898303 * s,
+    0.361222925 * l + 0.9388043065 * m + -7.127501531e-6 * s,
+    1.089087345 * s
+  ] : [
+    1.910196834 * l + -1.112123893 * m + 0.2019079668 * s,
+    0.3709500882 * l + 0.6290542574 * m + -8.055142184e-6 * s,
+    s
+  ];
+}
+
+/**
+ * Convert CIE-XYZ to LMS
+ * @params x
+ * @params y
+ * @params z
+ * @params normalised - true: use D65 matrix, else use equal-energy matrix
+ * @return lms - [l, m, s] (all in range 0-100 if normalised)
+ */
+export function xyz2lms(x: number, y: number, z: number, normalised = true): [number, number, number] {
+  return normalised ? [
+    0.4002 * x + 0.7076 * y + -0.0808 * z,
+    -0.2263 * x + 1.1653 * y + 0.0457 * z,
+    0.9182 * z
+  ] : [
+    0.38971 * x + 0.68898 * y + -0.07868 * z,
+    -0.22981 * x + 1.18340 * y + 0.04641 * z,
+    z
+  ];
+}
+
+export const lms2rgb = (l: number, m: number, s: number, normalised = true) => xyz2rgb(...lms2xyz(l, m, s, normalised));
+export const rgb2lms = (r: number, g: number, b: number, normalised = true) => xyz2lms(...rgb2xyz(r, g, b), normalised);
 
 /** Dictionary of CSS colors */
 export const cssColors: { [css: string]: string } = {

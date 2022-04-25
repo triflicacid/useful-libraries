@@ -43,6 +43,17 @@ export const inRange = (n: number, min: number, max: number) => n >= min && n < 
 /** Scale a number <n> from range <inMin>-<inMax> to <outMin>-<outMax> presevring propertions */
 export const scaleRange = (n: number, inMin: number, inMax: number, outMin: number, outMax: number) => (n - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
 
+/** Normlise data 0..1 */
+export const normalise = (...data: number[]) => {
+  let sum = data.reduce((p, c) => p + c, 0);
+  return data.map(n => n / sum);
+};
+
+/** Denormalise data from 0..1 */
+export const denormalise = (sum: number, ...normalised: number[]) => {
+  return normalised.map(n => n * sum);
+};
+
 /** Clamp a number within a range */
 export const clamp = (min: number, max: number, n: number) => {
   if (n < min) return min;
@@ -388,12 +399,12 @@ export function getDirectionBetween(point1: IVec, point2: IVec): Direction {
 
 /** Return direction from angle (radians) between 0 and 2pi */
 export function getDirectionFromAngle(α: number): Direction {
-  if (α > 1.5*Math.PI) return Direction.SouthEast;
-  if (α === 1.5*Math.PI) return Direction.South;
+  if (α > 1.5 * Math.PI) return Direction.SouthEast;
+  if (α === 1.5 * Math.PI) return Direction.South;
   if (α > Math.PI) return Direction.SouthWest;
   if (α === Math.PI) return Direction.SouthWest;
-  if (α > 0.5*Math.PI) return Direction.NorthWest;
-  if (α === 0.5*Math.PI) return Direction.North;
+  if (α > 0.5 * Math.PI) return Direction.NorthWest;
+  if (α === 0.5 * Math.PI) return Direction.North;
   if (α > 0) return Direction.NorthEast;
   if (α === 0) return Direction.East;
 }
@@ -402,12 +413,12 @@ export function getDirectionFromAngle(α: number): Direction {
 export function getAngleBetween(point1: IVec, point2: IVec) {
   if (point1.y === point2.y && point2.x >= point1.x) return 0; // Right
   if (point2.x > point1.x && point2.y < point1.y) return Math.atan((point1.y - point2.y) / (point2.x - point1.x)); // Top Right
-  if (point1.x === point2.x && point2.y < point1.y) return 0.5*Math.PI; // Up
+  if (point1.x === point2.x && point2.y < point1.y) return 0.5 * Math.PI; // Up
   if (point2.x < point1.x && point2.y < point1.y) return Math.PI - Math.atan((point1.y - point2.y) / (point1.x - point2.x)); // Top Left
   if (point1.y === point2.y && point2.x < point1.x) return Math.PI; // Left
   if (point2.x < point1.x && point2.y > point1.y) return Math.PI + Math.atan((point2.y - point1.y) / (point1.x - point2.x)); // Bottom Left
-  if (point1.x === point2.x && point2.y > point1.y) return 1.5*Math.PI; // Down
-  if (point2.x > point1.x && point2.y > point1.y) return 2*Math.PI - Math.atan((point2.y - point1.y) / (point2.x - point1.x)); // Bottom Left
+  if (point1.x === point2.x && point2.y > point1.y) return 1.5 * Math.PI; // Down
+  if (point2.x > point1.x && point2.y > point1.y) return 2 * Math.PI - Math.atan((point2.y - point1.y) / (point2.x - point1.x)); // Bottom Left
 }
 
 export interface IVec {
@@ -421,7 +432,7 @@ export interface IRec extends IVec {
 }
 
 /** angle in [-pi, pi] to [0, 2pi] */
-export const adjustRad = (angle: number) => (angle + 2*Math.PI) % (2*Math.PI);
+export const adjustRad = (angle: number) => (angle + 2 * Math.PI) % (2 * Math.PI);
 
 /** Sort array of coordinate points around a central point by angle */
 export function sortPointsByAngleFromCentre(centre: IVec, points: IVec[]) {
@@ -448,7 +459,7 @@ export function getPointOnRadius(centre: IVec, points: IVec[], α: number): IVec
 
   // Create point at 0rad
   angles.unshift(0);
-  if (points[0].x === points[points.length-1].x) {
+  if (points[0].x === points[points.length - 1].x) {
     points.unshift({ x: points[0].x, y: centre.y });
   } else {
     let p1 = { x: points[0].x - centre.x, y: points[0].y - centre.y } as IVec;
@@ -463,7 +474,7 @@ export function getPointOnRadius(centre: IVec, points: IVec[], α: number): IVec
   let a = Math.hypot(points[start].x - centre.x, centre.y - points[start].y);
   let b = Math.hypot(points[start].x - points[end].x, points[start].y - points[end].y);
   let c = Math.hypot(points[end].x - centre.x, points[end].y - centre.y);
-  let C = Math.acos((a*a + b*b - c*c)/(2*a*b));
+  let C = Math.acos((a * a + b * b - c * c) / (2 * a * b));
   let β = Math.PI - (α - angles[start]) - C;
   c = a * Math.sin(C) / Math.sin(β);
   return {
