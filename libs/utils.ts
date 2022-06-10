@@ -395,6 +395,7 @@ export function getDirectionBetween(point1: IVec, point2: IVec): Direction {
   if (point2.x < point1.x && point2.y > point1.y) return Direction.SouthWest; // Bottom Left
   if (point1.x === point2.x && point2.y > point1.y) return Direction.South; // Down
   if (point2.x > point1.x && point2.y > point1.y) return Direction.SouthEast; // Bottom Right
+  return -1;
 }
 
 /** Return direction from angle (radians) between 0 and 2pi */
@@ -407,6 +408,7 @@ export function getDirectionFromAngle(α: number): Direction {
   if (α === 0.5 * Math.PI) return Direction.North;
   if (α > 0) return Direction.NorthEast;
   if (α === 0) return Direction.East;
+  return -1;
 }
 
 /** Get angle between point1 and point2 */
@@ -442,7 +444,7 @@ export function sortPointsByAngleFromCentre(centre: IVec, points: IVec[]) {
   while (!sorted) {
     sorted = true;
     for (let i = 0; i < points.length - 1; i++) {
-      if (angles[i] > angles[i + 1]) {
+      if ((angles[i] as number) > (angles[i + 1] as number)) {
         ([angles[i], angles[i + 1]] = [angles[i + 1], angles[i]]);
         ([points[i], points[i + 1]] = [points[i + 1], points[i]]);
         sorted = false;
@@ -481,4 +483,35 @@ export function getPointOnRadius(centre: IVec, points: IVec[], α: number): IVec
     x: centre.x + c * Math.cos(α),
     y: centre.y - c * Math.sin(α)
   } as IVec;
+}
+
+export function parseArgstring(argstr: string) {
+  const data: { [arg: string]: any } = {};
+  let current = "";
+  for (let i = 0; i < argstr.length;) {
+    if (argstr[i] === "-") {
+      ++i;
+      if (argstr[i] === "-") {
+        ++i;
+        current = "";
+        for (; i < argstr.length && argstr[i] !== ' '; ++i) current += argstr[i];
+        data[current] = undefined;
+      } else {
+        current = "";
+        for (; i < argstr.length && argstr[i] !== ' '; ++i) current += argstr[i];
+        data[current] = true;
+      }
+    } else if (argstr[i] === " ") {
+      i++;
+    } else if (argstr[i] === "\"") {
+      let res = parseString(argstr, i);
+      i = res.endIndex + 1;
+      data[current] = res.string;
+    } else {
+      let thing = "";
+      for (; i < argstr.length && argstr[i] !== ' '; ++i) thing += argstr[i];
+      data[current] = thing;
+    }
+  }
+  return data;
 }

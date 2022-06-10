@@ -15,7 +15,7 @@ export function extractCoords(event: MouseEvent) {
 }
 
 /** Color formats which are represented as numefical arrays */
-export type NColorFormat = "rgb" | "rgba" | "hsl" | "hsv" | "cmyk" | "xyz" | "xyY" | "lab" | "lch" | "hlab" | "lms";
+export type NColorFormat = "rgb" | "rgba" | "hsl" | "hsv" | "cmyk" | "cmy" | "xyz" | "xyY" | "lab" | "lch" | "hlab" | "lms";
 /** Numeric data for NColorFormat */
 export type NColorData = [number, number, number] | [number, number, number, number];
 /** Convert NColor to RGB */
@@ -58,6 +58,95 @@ export function col2str(format: NColorFormat | string, values: NColorData, dp = 
       return `lch(${values[0]}, ${values[1]}, ${values[2]}°)`;
     default:
       return format + "(" + values.join(", ") + ")";
+  }
+}
+
+/**
+ * Convert between color models. Works by converting start -> rgb -> end.
+ * 
+ * As such, some conversions may be slow e.g. "xyz -> lms" employs "xyz -> rgb -> xyz -> lms" where siimply using the function `xyz2lms` would be more efficient
+ */
+export function col2col<U extends string | NColorData, V extends string | NColorData>(data: U, cfrom: ColorFormat, cto: ColorFormat): V {
+  if (cfrom === cto) return data as unknown as V;
+  let rgb: [number, number, number];
+  switch (cfrom) {
+    case "rgb":
+    case "rgba":
+      rgb = data as any;
+      break;
+    case "hex":
+      rgb = hex2rgb(data as string);
+      break;
+    case "hexa":
+      rgb = hexa2rgba(data as string).slice(0, 3) as [number, number, number];
+      break;
+    case "css":
+      rgb = css2rgb(data as string).slice(0, 3) as [number, number, number];
+      break;
+    case "hsl":
+      rgb = hsl2rgb(...(data as [number, number, number]));
+      break;
+    case "hsv":
+      rgb = hsv2rgb(...(data as [number, number, number]));
+      break;
+    case "cmyk":
+      rgb = cmyk2rgb(...(data as [number, number, number, number]));
+      break;
+    case "cmy":
+      rgb = cmy2rgb(...(data as [number, number, number]));
+      break;
+    case "xyz":
+      rgb = xyz2rgb(...(data as [number, number, number]));
+      break;
+    case "xyY":
+      rgb = xyz2rgb(...xyY2xyz(...(data as [number, number, number])));
+      break;
+    case "lab":
+      rgb = xyz2rgb(...lab2xyz(...(data as [number, number, number])));
+      break;
+    case "lch":
+      rgb = xyz2rgb(...lab2xyz(...lch2lab(...(data as [number, number, number]))));
+      break;
+    case "hlab":
+      rgb = xyz2rgb(...hlab2xyz(...(data as [number, number, number])));
+      break;
+    case "lms":
+      rgb = xyz2rgb(...lms2xyz(...(data as [number, number, number])));
+      break;
+    default:
+      rgb = [0, 0, 0];
+  }
+  switch (cto) {
+    case "rgb":
+    case "rgba":
+      return rgb as V;
+    case "hex":
+    case "css":
+      return rgb2hex(...rgb) as V;
+    case "hexa":
+      return (rgb2hex(...rgb) + "ff") as V;
+    case "hsl":
+      return rgb2hsl(...rgb) as V;
+    case "hsv":
+      return rgb2hsv(...rgb) as V;
+    case "cmyk":
+      return rgb2cmyk(...rgb) as V;
+    case "cmy":
+      return rgb2cmy(...rgb) as V;
+    case "xyz":
+      return rgb2xyz(...rgb) as V;
+    case "xyY":
+      return xyz2xyY(...rgb2xyz(...rgb)) as V;
+    case "lab":
+      return xyz2lab(...rgb2xyz(...rgb)) as V;
+    case "lch":
+      return lab2lch(...(xyz2lab(...rgb2xyz(...rgb)))) as V;
+    case "hlab":
+      return xyz2hlab(...rgb2xyz(...rgb)) as V;
+    case "lms":
+      return xyz2lms(...rgb2xyz(...rgb)) as V;
+    default:
+      return rgb as V;
   }
 }
 
@@ -183,7 +272,7 @@ export function css2rgb(css: string): number[] {
 export function rgb2cmyk(r: number, g: number, b: number): [number, number, number, number] {
   [r, g, b] = [r, g, b].map(n => n === 0 ? 0 : clamp(n, 0, 255) / 255);
   let k = 1 - Math.max(r, g, b);
-  return [((1 - r - k) / (1 - k)) * 100, ((1 - g - k) / (1 - k)) * 100, ((1 - b - k) / (1 - k)) * 100, k * 100];
+  return k === 1 ? [0, 0, 0, 100] : [((1 - r - k) / (1 - k)) * 100, ((1 - g - k) / (1 - k)) * 100, ((1 - b - k) / (1 - k)) * 100, k * 100];
 }
 
 /**
@@ -758,6 +847,7 @@ export function bestTextColor(rgb: [number, number, number], n = 100) {
 
 export interface IInteractiveSpectra1D {
   element: HTMLDivElement;
+  enabled: boolean;
   draw: () => void;
   destroy: () => void;
   getColorAtStop: (stop: number) => number[];
@@ -767,10 +857,10 @@ export interface IInteractiveSpectra1D {
 
 /** Represent a color spectrum with one changing variable */
 export class Spectrum_1D {
-  public readonly format: NColorFormat;
+  public format: NColorFormat;
   public colorData: NColorData;
   public range: [number, number];
-  private readonly _func: NColorToRGBFunc | undefined;
+  public func: NColorToRGBFunc | undefined;
   /** Draw black line when variable parameter are +-1 withing these values */
   public stops: number[];
   /** All createInteractive return objects */
@@ -785,7 +875,7 @@ export class Spectrum_1D {
    */
   constructor(format: NColorFormat, colorData: NColorData, range: [number, number], funcToRGB?: NColorToRGBFunc) {
     this.format = format;
-    this._func = funcToRGB;
+    this.func = funcToRGB;
     this.colorData = colorData;
     this.range = range;
     this.stops = [];
@@ -800,7 +890,7 @@ export class Spectrum_1D {
     for (let i = 0; i <= width; i++) {
       const v = this.range[0] + dv * i;
       const cdata = this.colorData.map(n => isNaN(n) ? v : n);
-      const rgb = this._func ? this._func(cdata[0], cdata[1], cdata[2], cdata[3]) : cdata as [number, number, number];
+      const rgb = this.func ? this.func(cdata[0], cdata[1], cdata[2], cdata[3]) : cdata as [number, number, number];
       ctx.fillStyle = col2str("rgb", rgb);
       ctx.fillRect(i, 0, 1, height);
     }
@@ -845,10 +935,12 @@ export class Spectrum_1D {
     if (addEvents) {
       canvas.style.cursor = "crosshair";
       canvas.addEventListener("mousedown", event => {
-        const [x, y] = extractCoords(event);
-        this.stops[colorStopIndex as number] = x * dv;
-        draw();
-        I.onclick(event, x, y);
+        if (I.enabled) {
+          const [x, y] = extractCoords(event);
+          this.stops[colorStopIndex as number] = x * dv;
+          draw();
+          I.onclick(event, x, y);
+        }
       });
     }
     const draw = () => {
@@ -868,7 +960,7 @@ export class Spectrum_1D {
       this.interactives.delete(I);
       for (let k in I) delete I[k as keyof typeof I];
     };
-    const I = { element: div, getColorAtStop, getRGBAColor, draw, onclick, destroy } as IInteractiveSpectra1D;
+    const I = { element: div, enabled: true, getColorAtStop, getRGBAColor, draw, onclick, destroy } as IInteractiveSpectra1D;
     this.interactives.add(I);
     draw();
     return I;

@@ -1,5 +1,14 @@
 import * as col from "../libs/color";
 
+export function sample(rgb: number[]) {
+  let div = document.createElement("div");
+  div.style.display = "inline-block";
+  div.style.border = "1px solid black";
+  div.style.padding = "14px";
+  div.style.backgroundColor = `rgb(${rgb.join(',')})`;
+  return div;
+}
+
 function listCssColors() {
   for (let name in col.cssColors) {
     let p = document.createElement("p"), hex = col.cssColors[name], rgb = col.hex2rgb(hex);
