@@ -37,6 +37,11 @@ These a general useful programs.
 
 **Dependencies**: *None*
 
+# `Expression.ts`
+**About**: A class for parsing and evaluating numerical expressions
+
+**Dependencies**: `utils::parseNumber`, `maths/Complex`
+
 # `FileUploader.ts`
 **About**: A class for managing client side file uploads
 

@@ -178,6 +178,13 @@ export class Complex {
     return new Complex(this.a, this.b);
   }
 
+  /** Is this truthy? */
+  public isTruthy() {
+    if (this.b === 0) return !!this.a; // If b=0, truthiness depends on a
+    if (this.a === 0) return !!this.b; // If b=0, truthiness depends on b
+    return true; // Else, true
+  }
+
   /** Return new complex number = a + b */
   static add(a_: any, b_: any) {
     const za = Complex.parse(a_);

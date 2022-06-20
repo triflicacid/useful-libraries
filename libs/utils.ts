@@ -273,6 +273,18 @@ export interface IParseNumberOptions {
   decimal?: boolean; // Allow decimal
   seperator?: string; // Numeric seperator
   signed?: boolean; // Scan for +/-
+  imag?: string; // Imaginary unit? (undefined = disabled)
+}
+
+export interface IParsedNumber {
+  str: string; // Extracted string section
+  pos: number; // Position of number in string
+  sign: 1 | -1;
+  base: number; // "Base" of the number (i.e. not rased to exponebnt)
+  exp: number; // Exponent of number (default: 1)
+  radix: number; // Radix of number (e.g. base 10, base 16) for what it was extracted as
+  num: number; // Actual number
+  imag: boolean; // Is number imaginary?
 }
 
 const radices = { x: 16, d: 10, b: 2, o: 8 };
@@ -282,8 +294,8 @@ export function parseNumber(string: string, opts: IParseNumberOptions = {}) {
   opts.decimal ??= true;
   opts.signed ??= true;
 
-  let pos = 0, sign = 1, strBeforeDot = '', strAfterDot = '', radix = 10, exp = null;
-  let metSign = !opts.signed, metDigitBeforeDecimal = false, metDot = false, metDigitAfterDecimal = false, metE = false, metSeperator = false, metRadix = false;
+  let pos = 0, sign = 1, strBeforeDot = '', strAfterDot = '', radix = 10, exp: IParsedNumber | null = null;
+  let metSign = !opts.signed, metDigitBeforeDecimal = false, metDot = false, metDigitAfterDecimal = false, metE = false, metSeperator = false, metRadix = false, metImag = false;
 
   for (pos = 0; pos < string.length; pos++) {
     if (!metSign && (string[pos] === '-' || string[pos] === '+')) { // Sign
@@ -337,6 +349,11 @@ export function parseNumber(string: string, opts: IParseNumberOptions = {}) {
     }
   }
 
+  if (opts.imag && (strBeforeDot !== '' || strAfterDot !== '') && string[pos] === opts.imag) {
+    pos++;
+    metImag = true;
+  }
+
   if (strBeforeDot !== '') strBeforeDot = parseInt(strBeforeDot, radix).toString();
   if (strAfterDot !== '') strAfterDot = parseInt(strAfterDot, radix).toString();
   let str = strBeforeDot + (metDot ? '.' + strAfterDot : '');
@@ -345,13 +362,13 @@ export function parseNumber(string: string, opts: IParseNumberOptions = {}) {
     str = '';
   }
 
-  let num = sign * +str, base = num;
+  let num = sign * +str, base = num, nexp = 1;
   if (exp) {
     num *= Math.pow(10, exp.num);
     str += 'e' + exp.str;
-    exp = exp.num;
+    nexp = exp.num;
   }
-  return { pos, str: string.substring(0, pos), sign, base, exp, radix, num };
+  return { pos, str: string.substring(0, pos), sign, base, exp: nexp, radix, num, imag: metImag } as IParsedNumber;
 }
 
 /** Parse caracter literal (assume literal is enclosed in '<literal>') */
