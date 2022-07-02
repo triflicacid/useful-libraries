@@ -60,7 +60,7 @@ export function wrightomega_ext(z: Complex, cond: Complex = null): Complex {
         w = Complex.add(1, Complex.add(-1, Complex.add(3 / 2, Complex.add(-8.0 / 3.0, Complex.mult(125 / 24, pz)).mult(pz)).mult(pz)).mult(pz)).mult(pz);
         if (w.equals(0)) {
             // console.error(`WriteOmega: underflow in exponential series`);
-            cond.set(Complex.div(z, Complex.add(1, w))); // cond = z/(1.0+*w)
+            if (cond) cond.set(Complex.div(z, Complex.add(1, w))); // cond = z/(1.0+*w)
             return w;
         }
     } else if ((-2 < x && x <= 1 && -1 <= y && y <= 1) || (-2 < x && (x - 1) * (x - 1) + y * y <= PI * PI)) {
@@ -83,7 +83,7 @@ export function wrightomega_ext(z: Complex, cond: Complex = null): Complex {
 
         if (Complex.abs(z) > 1e50) {
             // Series is accurate and the iterative scheme could overflow
-            cond.set(Complex.div(z, Complex.add(1, w))); // cond = z/(1.0+*w)
+            if (cond) cond.set(Complex.div(z, Complex.add(1, w))); // cond = z/(1.0+*w)
             return w;
         }
     } else if (x <= -1.05 && 0.75 * (x + 1) < y + PI && y + PI <= 0) {
@@ -100,7 +100,7 @@ export function wrightomega_ext(z: Complex, cond: Complex = null): Complex {
 
         if (Complex.abs(z) > 1e50) {
             // Series is accurate and the iterative scheme could overflow
-            cond.set(Complex.div(z, Complex.add(1, w))); // cond = z/(1.0+*w)
+            if (cond) cond.set(Complex.div(z, Complex.add(1, w))); // cond = z/(1.0+*w)
             return w;
         }
     } else {
@@ -116,7 +116,7 @@ export function wrightomega_ext(z: Complex, cond: Complex = null): Complex {
 
         if (Complex.abs(z) > 1e50) {
             // Series is accurate and the iterative scheme could overflow
-            cond.set(Complex.div(z, Complex.add(1, w))); // cond = z/(1.0+*w)
+            if (cond) cond.set(Complex.div(z, Complex.add(1, w))); // cond = z/(1.0+*w)
             return w;
         }
     }
@@ -162,7 +162,7 @@ export function wrightomega_ext(z: Complex, cond: Complex = null): Complex {
     w = Complex.mult(s, w);
 
     // Provide condition number estimate
-    cond.set(Complex.div(z, Complex.add(1, w))); // cond = z/(1.0+*w)
+    if (cond) cond.set(Complex.div(z, Complex.add(1, w))); // cond = z/(1.0+*w)
 
     return w;
 }

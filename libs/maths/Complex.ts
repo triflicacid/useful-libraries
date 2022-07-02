@@ -414,6 +414,59 @@ export class Complex {
     return new Complex(ea * Math.cos(z.b), ea * Math.sin(z.b));
   }
 
+  /** Compare: is a == b? */
+  public static eq(a: Complex, b: Complex) {
+    return a.a === b.a && a.b === b.b;
+  }
+
+  /**
+   * Compare: is a > b?
+   * - If Im(a) = Im(b) = 0, return Re(a) > Re(b)
+   * - If Re(a) = Re(b) = 0, return Im(a) > Im(b)
+   * - Else, return false
+  */
+  public static gt(a: Complex, b: Complex) {
+    if (a.b === 0 && b.b === 0) return a.a > b.a;
+    if (a.a === 0 && b.a === 0) return a.b > b.b;
+    return false;
+  }
+
+  /**
+   * Compare: is a >= b?
+   * - If Im(a) = Im(b) = 0, return Re(a) >= Re(b)
+   * - If Re(a) = Re(b) = 0, return Im(a) >= Im(b)
+   * - Else, return false
+  */
+  public static ge(a: Complex, b: Complex) {
+    if (a.b === 0 && b.b === 0) return a.a >= b.a;
+    if (a.a === 0 && b.a === 0) return a.b >= b.b;
+    return false;
+  }
+
+  /**
+   * Compare: is a < b?
+   * - If Im(a) = Im(b) = 0, return Re(a) < Re(b)
+   * - If Re(a) = Re(b) = 0, return Im(a) < Im(b)
+   * - Else, return false
+  */
+  public static lt(a: Complex, b: Complex) {
+    if (a.b === 0 && b.b === 0) return a.a < b.a;
+    if (a.a === 0 && b.a === 0) return a.b < b.b;
+    return false;
+  }
+
+  /**
+   * Compare: is a <= b?
+   * - If Im(a) = Im(b) = 0, return Re(a) <= Re(b)
+   * - If Re(a) = Re(b) = 0, return Im(a) <= Im(b)
+   * - Else, return false
+  */
+  public static le(a: Complex, b: Complex) {
+    if (a.b === 0 && b.b === 0) return a.a <= b.a;
+    if (a.a === 0 && b.a === 0) return a.b <= b.b;
+    return false;
+  }
+
   /** Generate complex number from polar representation */
   public static fromPolar(r: number, θ: number) {
     return new Complex(r * Math.cos(θ), r * Math.sin(θ));

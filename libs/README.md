@@ -37,6 +37,11 @@ These a general useful programs.
 
 **Dependencies**: *None*
 
+# `expression-create.ts`
+**About**: Various functions for creating `Expression` environments with pre-sets
+
+**Dependencies**: `Expression`, `maths/Complex`, `maths/constants`, `maths/lambertw`, `maths/wrightomega`
+
 # `Expression.ts`
 **About**: A class for parsing and evaluating numerical expressions
 
