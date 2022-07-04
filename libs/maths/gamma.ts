@@ -22,23 +22,3 @@ export const gamma = (function () {
   }
   return gamma;
 })();
-
-/** Return both roots of a quadratic ax^2 + bx + c = 0 */
-export function quadratic(a: Complex, b: Complex, c: Complex) {
-  const twoa = Complex.mult(2, a);
-  const A = Complex.mult(-1, b).div(twoa); // -b / 2a
-  const B = Complex.sqrt(Complex.pow(b, 2).sub(new Complex(4).mult(a).mult(c))).div(twoa); // sqrt(b^2 - 4ac) / 2a
-  return [Complex.add(A, B), Complex.sub(A, B)];
-}
-
-/** Return the three roots of a depressed cubic ax^3 + bx + c = 0 */
-export function depressed_cubic(a: Complex, b: Complex, c: Complex) {
-  // t^3 + pt + q
-  const p = Complex.div(b, a);
-  const q = Complex.div(c, a);
-  const root = Complex.sqrt(Complex.pow(q, 2).div(4).add(Complex.pow(p, 3).div(27))); // sqrt(q^2 / 4 + p^3 / 27)
-  const k = Complex.div(q, -2); // -q / 2
-  const z = Complex.add(k, root); // k + root
-  const mag = Math.cbrt(z.getMag()); // |k + root|
-  return Array.from({ length: 3 }, (_, i) => i).map(k => new Complex(2 * mag * Math.cos((z.getArg() + 2 * Math.PI * k) / 3))); // Ignore imaginary parts
-}

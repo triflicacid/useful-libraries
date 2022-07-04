@@ -15,15 +15,25 @@ This directory contains useful programs for maths-based activities.
 # `exponential-integral.ts`
 **About**: Define several Exponential Integral functions
 
-**Dependencies**: *None*
+**Dependencies**: `constants.ts`
 
 # `Expression.ts`
 **About**: A class for parsing and evaluating numerical expressions
 
 **Dependencies**: `../utils::parseNumber`
 
+# `gamma.ts`
+**About**: Approximation of the gamma function (complex argument)
+
+**Dependencies**: `Complex.ts`, `constants.ts`
+
 # `lambertw.ts`
 **About**: Return function such that `W(x*e**x) = x`
+
+**Dependencies**: `Complex.ts`, `constants.ts`
+
+# `polynomial.ts`
+**About**: Class of functions to solve or produce polynomials
 
 **Dependencies**: `Complex.ts`, `constants.ts`
 

@@ -376,16 +376,31 @@ export class Complex {
     return Complex.parse(z_).getMag();
   }
 
-  /** square root */
+  /** square root (principle branch) */
   public static sqrt(z_: any) {
     const z = Complex.parse(z_);
     return Complex.pow(z, 0.5);
   }
 
-  /** cube root */
+  /** cube root (principle branch) */
   public static cbrt(z_: any) {
     const z = Complex.parse(z_);
     return Complex.pow(z, 1 / 3);
+  }
+
+  /**
+   * return `n`th roots of complex number `z`
+   * 
+   * suppose `z^n = k*exp(i*a)`, then `z = k^(1/n)*exp(i*((a + 2*m*pi)/n))` for `m=0,1,...,n`
+   * 
+   * @returns array of roots of size `n`
+   */
+  public static root(z_: any, n: number) {
+    const z = Complex.parse(z_);
+    const arg = z.getArg();
+    const args = Array.from({ length: n }, (_, m) => (arg + 2 * m * Math.PI) / n); // Argument values of roots
+    const k = Math.pow(z.getMag(), 1 / n);
+    return args.map(arg => Complex.fromPolar(k, arg));
   }
 
   /** Return ceiling of a number */
