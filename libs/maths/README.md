@@ -12,6 +12,11 @@ This directory contains useful programs for maths-based activities.
 
 **Dependencies**: *None*
 
+# `exponential-integral.ts`
+**About**: Define several Exponential Integral functions
+
+**Dependencies**: *None*
+
 # `Expression.ts`
 **About**: A class for parsing and evaluating numerical expressions
 
