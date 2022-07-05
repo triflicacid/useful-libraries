@@ -57,6 +57,11 @@ This directory contains useful programs for maths-based activities.
 
 **Dependencies**: `bernoulli.ts`
 
+# `sin-cos-integrals.ts`
+**About**: Functions for evaluating various sine and cosine integrals e.g. `Si(x)`, `gi(x)`
+
+**Dependencies**: *None*
+
 # `Matrix.ts`
 **About**: Represent a matrix of complex numbers
 
