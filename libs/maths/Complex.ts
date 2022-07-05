@@ -239,19 +239,13 @@ export class Complex {
       a = za.a;
       b = za.b;
     } else if (za.equals(0) && zb.b === 0 && zb.a > 0) { // 0^n where n > 0 if 0 else NaN
-      if (zb.b === 0 && zb.a > 0) {
-        a = 0;
-        b = 0;
-      } else {
-        a = NaN;
-        b = NaN;
-      }
+      a = b = zb.b === 0 && zb.a > 0 ? 0 : NaN;
     } else {
       const r = za.getMag(), θ = za.getArg();
-      let common = Math.pow(r, zb.a) * Math.exp(-zb.b * θ); // Commong multiplier of both
+      let k = Math.pow(r, zb.a) * Math.exp(-zb.b * θ); // Commong multiplier of both
       let value = (zb.a * θ) + (zb.b * Math.log(r)); // Commong value of trig functions
-      a = common * Math.cos(value);
-      b = common * Math.sin(value);
+      a = k * Math.cos(value);
+      b = k * Math.sin(value);
     }
     return new Complex(a, b);
   }
@@ -309,8 +303,7 @@ export class Complex {
     return Complex.mult(k, ln); // <k> * <ln>
   }
 
-  /** Calculate hyperbolic arccosine of a number
-  */
+  /** Calculate hyperbolic arccosine of a number */
   public static arccosh(z_: any) {
     // arccosh(z) = ln[z + |z^2 - 1|^0.5 * e^((i/2) * arg(z^2 - 1))]
     const z = Complex.parse(z_);
@@ -389,7 +382,7 @@ export class Complex {
   }
 
   /**
-   * return `n`th roots of complex number `z`
+   * Return the nth roots of a complex number z
    * 
    * suppose `z^n = k*exp(i*a)`, then `z = k^(1/n)*exp(i*((a + 2*m*pi)/n))` for `m=0,1,...,n`
    * 
@@ -487,13 +480,13 @@ export class Complex {
     return new Complex(r * Math.cos(θ), r * Math.sin(θ));
   }
 
-  /** Return complex unit */
+  /** Return new complex unit */
   public static get I() { return new Complex(0, 1); }
 
-  /** Return not-a-number */
+  /** Return new not-a-number */
   public static get NaN() { return new Complex(NaN, NaN); }
 
-  /** Return infinity */
+  /** Return new infinity */
   public static get Inf() { return new Complex(Infinity, Infinity); }
 
   /** Attemot to parse argument to a complex number */
@@ -526,9 +519,9 @@ export class Complex {
   }
 }
 
-// Apply a function to a complex number
-export function _zapply(arg: any, fn: Function) {
-  const z = Complex.parse(arg);
+/** Apply a function to a complex number */
+export function _zapply(z_: any, fn: (n: number) => number) {
+  const z = Complex.parse(z_);
   z.a = fn(z.a);
   z.b = fn(z.b);
   return z;

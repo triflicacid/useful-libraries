@@ -1,11 +1,17 @@
-import { createComplexExpression, createExpression } from "../libs/expression-create";
+import { createExpression } from "../libs/expression-create";
 
 function main() {
-  // const { expr, parse } = createComplexExpression();
-  // parse("ln(i) + 1");
-  // console.log(tostr(expr.evaluate()));
   const { expr, parse } = createExpression();
-  parse("sqrt(2) + 2 ** 3 - 1");
+  expr.setSymbol("f", (x) => {
+    console.log("CALL f");
+    return x + 3;
+  });
+  expr.setSymbol("g", (x) => {
+    console.log("CALL g");
+    return x ** 2;
+  });
+  parse("g(f(x))");
+  expr.setSymbol("x", 2);
   console.log(tostr(expr.evaluate()));
 }
 

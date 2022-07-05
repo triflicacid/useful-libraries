@@ -354,15 +354,13 @@ export function parseNumber(string: string, opts: IParseNumberOptions = {}) {
     metImag = true;
   }
 
-  if (strBeforeDot !== '') strBeforeDot = parseInt(strBeforeDot, radix).toString();
-  if (strAfterDot !== '') strAfterDot = parseInt(strAfterDot, radix).toString();
   let str = strBeforeDot + (metDot ? '.' + strAfterDot : '');
   if (str === '.' || str.startsWith('.e')) {
     pos = 0;
     str = '';
   }
 
-  let num = sign * +str, base = num, nexp = 1;
+  let num = sign * base_to_float(str, radix), base = num, nexp = 1;
   if (exp) {
     num *= Math.pow(10, exp.num);
     str += 'e' + exp.str;
@@ -381,6 +379,48 @@ export function parseCharLit(literal: string): string {
     if (literal.length !== 1) throw new Error(`Character literal too large`);
     return literal[0];
   }
+}
+
+/** Convert given number in base 10 to the provided base */
+export function int_to_base(n, b) {
+  let str = "";
+  if (b < 2) return str;
+  while (n > 0.1) {
+    let rem = n % b;
+    n /= b;
+    let c = rem + (rem > 9 ? 55 : 48);
+    str += String.fromCharCode(c);
+  }
+  return str.split("").reverse().join("");
+}
+
+/** Convert string in a given base to a number. */
+export function base_to_int(str: string, base: number) {
+  let dec = 0;
+  let k = str.length === 1 ? 1 : Math.pow(base, str.length - 1), i = 0;
+  while (i < str.length) {
+    let code = str[i].charCodeAt(0);
+    dec += (code - (code <= 57 ? 48 : 55)) * k;
+    k /= base;
+    i++;
+  }
+  return dec;
+}
+
+/** Convert string in a given base to a number. May include a decimal point */
+export function base_to_float(str: string, base: number) {
+  let dec = 0;
+  const di = str.indexOf(".");
+  let k = str.length === 1 ? 1 : Math.pow(base, (di === -1 ? str.length : di) - 1), i = 0;
+  while (i < str.length) {
+    if (str[i] !== '.') {
+      let code = str[i].charCodeAt(0);
+      dec += (code - (code <= 57 ? 48 : 55)) * k;
+      k /= base;
+    }
+    i++;
+  }
+  return dec;
 }
 
 /** Sleep for <ms> milliseconds. Resolve with <ms>. */

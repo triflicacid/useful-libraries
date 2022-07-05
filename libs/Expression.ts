@@ -1,6 +1,4 @@
-// @ts-ignore
 import { Complex } from "./maths/Complex";
-// @ts-ignore
 import { IParseNumberOptions, parseNumber } from "./utils";
 
 interface IToken {
@@ -63,6 +61,14 @@ function getPrecedence(token: IToken | IOperator) {
 
 /** Parse string expression to array of tokens */
 function parseExpression(expr: string, operators: IOperatorMap, numberOpts: IParseNumberOptions) {
+  let o = tokenifyExpression(expr, operators, numberOpts);
+  if (o.error) return o;
+  o = parseTokenCallOpts(o.tokens as Tokens, operators, numberOpts);
+  return o;
+}
+
+/** Given string expression, return array of tokens */
+function tokenifyExpression(expr: string, operators: IOperatorMap, numberOpts: IParseNumberOptions) {
   const tokens: Tokens = [];
   for (let i = 0; i < expr.length;) {
     let token: IOperator | IToken | undefined = undefined;
@@ -71,54 +77,54 @@ function parseExpression(expr: string, operators: IOperatorMap, numberOpts: IPar
       i += expr[i].length;
       continue;
     } else if (expr[i] === '*' && expr[i + 1] === '*') {
-      token = <IOperator>{ type: TOKEN_OP, value: '**', args: 2, action: operators["**"], assoc: 'rtl', prec: 16 };
+      token = { type: TOKEN_OP, value: '**', args: 2, action: operators["**"], assoc: 'rtl', prec: 16 } as IOperator;
       i += 2;
     } else if (expr[i] === '=' && expr[i + 1] === '=') {
-      token = <IOperator>{ type: TOKEN_OP, value: '==', args: 2, action: operators["=="], assoc: 'ltr', prec: 9 };
+      token = { type: TOKEN_OP, value: '==', args: 2, action: operators["=="], assoc: 'ltr', prec: 9 } as IOperator;
       i += 2;
     } else if (expr[i] === '!' && expr[i + 1] === '=') {
-      token = <IOperator>{ type: TOKEN_OP, value: '!=', args: 2, action: operators["!="], assoc: 'ltr', prec: 9 };
+      token = { type: TOKEN_OP, value: '!=', args: 2, action: operators["!="], assoc: 'ltr', prec: 9 } as IOperator;
       i += 2;
     } else if (expr[i] === '<' && expr[i + 1] === '=') {
-      token = <IOperator>{ type: TOKEN_OP, value: '<=', args: 2, action: operators["<="], assoc: 'ltr', prec: 10 };
+      token = { type: TOKEN_OP, value: '<=', args: 2, action: operators["<="], assoc: 'ltr', prec: 10 } as IOperator;
       i += 2;
     } else if (expr[i] === '>' && expr[i + 1] === '=') {
-      token = <IOperator>{ type: TOKEN_OP, value: '>=', args: 2, action: operators[">="], assoc: 'ltr', prec: 10 };
+      token = { type: TOKEN_OP, value: '>=', args: 2, action: operators[">="], assoc: 'ltr', prec: 10 } as IOperator;
       i += 2;
     } else if (expr[i] === '!') {
-      token = <IOperator>{ type: TOKEN_OP, value: '!', args: 1, action: operators["!"], assoc: 'rtl', prec: 17 };
+      token = { type: TOKEN_OP, value: '!', args: 1, action: operators["!"], assoc: 'rtl', prec: 17 } as IOperator;
       i += 1;
     } else if (expr[i] === '>') {
-      token = <IOperator>{ type: TOKEN_OP, value: '>', args: 2, action: operators[">"], assoc: 'ltr', prec: 10 };
+      token = { type: TOKEN_OP, value: '>', args: 2, action: operators[">"], assoc: 'ltr', prec: 10 } as IOperator;
       i += 1;
     } else if (expr[i] === '<') {
-      token = <IOperator>{ type: TOKEN_OP, value: '<', args: 2, action: operators["<"], assoc: 'ltr', prec: 10 };
+      token = { type: TOKEN_OP, value: '<', args: 2, action: operators["<"], assoc: 'ltr', prec: 10 } as IOperator;
       i += 1;
     } else if (expr[i] === '/') {
-      token = <IOperator>{ type: TOKEN_OP, value: '/', args: 2, action: operators["/"], assoc: 'ltr', prec: 15 };
+      token = { type: TOKEN_OP, value: '/', args: 2, action: operators["/"], assoc: 'ltr', prec: 15 } as IOperator;
       i += 1;
     } else if (expr[i] === '%') {
-      token = <IOperator>{ type: TOKEN_OP, value: '%', args: 2, action: operators["%"], assoc: 'ltr', prec: 15 };
+      token = { type: TOKEN_OP, value: '%', args: 2, action: operators["%"], assoc: 'ltr', prec: 15 } as IOperator;
       i += 1;
     } else if (expr[i] === '*') {
-      token = <IOperator>{ type: TOKEN_OP, value: '*', args: 2, action: operators["*"], assoc: 'ltr', prec: 15 };
+      token = { type: TOKEN_OP, value: '*', args: 2, action: operators["*"], assoc: 'ltr', prec: 15 } as IOperator;
       i += 1;
     } else if (expr[i] === '+') {
-      token = <IOperator>{ type: TOKEN_OP, value: '+', args: 2, action: operators["+"], assoc: 'ltr', prec: 14 };
+      token = { type: TOKEN_OP, value: '+', args: 2, action: operators["+"], assoc: 'ltr', prec: 14 } as IOperator;
       i += 1;
     } else if (expr[i] === '-') {
-      token = <IOperator>{ type: TOKEN_OP, value: '-', args: 2, action: operators["-"], assoc: 'ltr', prec: 14 };
+      token = { type: TOKEN_OP, value: '-', args: 2, action: operators["-"], assoc: 'ltr', prec: 14 } as IOperator;
       i += 1;
     } else if (expr[i] === '=') {
-      token = <IOperator>{
+      token = {
         type: TOKEN_OP, value: '=', args: 2, action: (a: string, b: number, symbols: SymbolMap) => (symbols.set(a, b), b), assoc: 'rtl', prec: 3
-      };
+      } as IOperator;
       i += 1;
     } else if (expr[i] === ',') {
-      token = <IOperator>{ type: TOKEN_OP, value: ',', args: 2, action: (a: string, b: number) => b, assoc: 'ltr', prec: 1 };
+      token = { type: TOKEN_OP, value: ',', args: 2, action: (a: string, b: number) => b, assoc: 'ltr', prec: 1 } as IOperator;
       i += 1;
     } else if (expr[i] === '(' || expr[i] === ')') {
-      token = <IOperator>{ type: TOKEN_OP, value: expr[i] };
+      token = { type: TOKEN_OP, value: expr[i] } as IOperator;
       i += 1;
     } else {
       if (/[A-Za-z_$]/.test(expr[i])) {
@@ -126,11 +132,11 @@ function parseExpression(expr: string, operators: IOperatorMap, numberOpts: IPar
         while (expr[i] && /[A-Za-z$_0-9]/.test(expr[i])) {
           symbol += expr[i++];
         }
-        token = <IToken>{ type: TOKEN_SYM, value: symbol };
+        token = { type: TOKEN_SYM, value: symbol } as IToken;
       } else {
         let nobj = parseNumber(expr.substring(i), numberOpts);
         if (nobj.str.length !== 0) {
-          token = <IToken>{ type: TOKEN_NUM, value: nobj.imag ? new Complex(0, nobj.num) : nobj.num };
+          token = { type: TOKEN_NUM, value: nobj.imag ? new Complex(0, nobj.num) : nobj.num } as IToken;
           i += nobj.str.length;
         }
       }
@@ -167,10 +173,15 @@ function parseExpression(expr: string, operators: IOperatorMap, numberOpts: IPar
     }
   }
 
+  return { error: false, tokens };
+}
+
+/** Given an array of tokens, identify and extract call operators */
+function parseTokenCallOpts(tokens: Tokens, operators: IOperatorMap, numberOpts: IParseNumberOptions) {
   // Call operator: <symbol>(...)
   for (let i = 0; i < tokens.length - 1;) {
     if (tokens[i].type === TOKEN_SYM && tokens[i + 1].type === TOKEN_OP && tokens[i + 1].value === '(') {
-      let name = tokens[i].value, j = i;
+      let j = i;
       i += 2;
       let contents: Tokens = [], open = 1;
       while (tokens[i]) {
@@ -186,7 +197,9 @@ function parseExpression(expr: string, operators: IOperatorMap, numberOpts: IPar
       }
       if (open > 0) return { error: true, pos: i, msg: `Unclosed parenthesis (expected ${open} * ')' at position ${i})` };
       let args: Tokens[] = [[]];
-      contents.forEach(T => {
+      let o = parseTokenCallOpts(contents, operators, numberOpts);
+      if (o.error) return o;
+      o.tokens.forEach((T: IToken | IOperator) => {
         if (T.type === TOKEN_OP && T.value === ',') args.push([]);
         else args[args.length - 1].push(T);
       });
@@ -198,12 +211,12 @@ function parseExpression(expr: string, operators: IOperatorMap, numberOpts: IPar
           if (o.error) return o;
           argValues.push(o.value);
         }
-        let x = f(...argValues);
+        let x = f(...argValues, symbols);
         if (typeof x === 'number') return numberOpts.imag ? new Complex(x) : x;
         else if (x == undefined) return numberOpts.imag ? new Complex(0) : 0;
         else return x;
       };
-      let op = <IToken>{ type: TOKEN_OP, value: '()', args: 1, assoc: 'ltr', prec: 20, action: call };
+      let op = { type: TOKEN_OP, value: '()', args: 1, assoc: 'ltr', prec: 20, action: call } as IToken;
       tokens.splice(j + 1, contents.length + 2, op);
       ++i;
     } else {
@@ -296,7 +309,6 @@ function evaluateExpression(tokens: Tokens, symbols: SymbolMap, numberOpts: IPar
 const TOKEN_OP = 1;
 const TOKEN_NUM = 2;
 const TOKEN_SYM = 4;
-const LABELREGEX = /^[A-Za-z][A-Za-z0-9_\$]*$/;
 
 type Tokens = Array<IToken | IOperator>;
 type SymbolMap = Map<string, number | Function>
@@ -317,21 +329,28 @@ export class Expression {
     this.numberOpts = {};
   }
 
+  /** Reset symbol map and expression data */
   public reset() {
     this._tokens.length = 0;
     this._symbols.clear();
     return this;
   }
 
+  /** Load new raw expression string */
   public load(expr: string) {
     this._tokens.length = 0;
     this._raw = expr;
     return this;
   }
 
+  /** Get original expression string */
+  public getOriginal() {
+    return this._raw;
+  }
+
   public setSymbol(name: string, value: number | Function) {
     this._symbols.set(name, value);
-    return value;
+    return this;
   }
 
   public hasSymbol(name: string) {
@@ -340,6 +359,10 @@ export class Expression {
 
   public getSymbol(name: string) {
     return this._symbols.get(name);
+  }
+
+  public delSymbol(name: string) {
+    return this._symbols.delete(name);
   }
 
   public setSymbolMap(map: Map<string, number>) {
@@ -363,5 +386,12 @@ export class Expression {
   /** Evaluate parsed string. */
   public evaluate() {
     return evaluateExpression(this._tokens, this._symbols, this.numberOpts);
+  }
+
+  /** Return new Expression, copying symbolMap */
+  public copy(expr = undefined) {
+    let E = new Expression(expr);
+    this._symbols.forEach((v, k) => E._symbols.set(k, v));
+    return E;
   }
 } 
