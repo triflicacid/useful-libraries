@@ -12,6 +12,11 @@ This directory contains useful programs for maths-based activities.
 
 **Dependencies**: `gamma.ts`
 
+# `chebyshev-polynomials.ts`
+**About**: Functions for evaluating Chebyshev Polynomial functions: first (T), second (U), third (V), and fourth (W), including their shifted counterparts
+
+**Dependencies**: *None*
+
 # `Complex.ts`
 **About**: Represent a complex number
 
