@@ -2,6 +2,11 @@
 
 This directory contains useful programs for maths-based activities.
 
+# `bernoulli.ts`
+**About**: Functions for obtaining the `n`th Bernoulli number
+
+**Dependencies**: *None*
+
 # `Complex.ts`
 **About**: Represent a complex number
 
@@ -12,20 +17,20 @@ This directory contains useful programs for maths-based activities.
 
 **Dependencies**: *None*
 
+# `dirichlet-eta.ts`
+**About**: Functions for evaluating the Dirichlet Eta function, η
+
+**Dependencies**: `gamma.ts`
+
 # `exponential-integral.ts`
 **About**: Define several Exponential Integral functions
 
 **Dependencies**: `constants.ts`
 
-# `Expression.ts`
-**About**: A class for parsing and evaluating numerical expressions
-
-**Dependencies**: `../utils::parseNumber`
-
 # `gamma.ts`
-**About**: Approximation of the gamma function (complex argument)
+**About**: Approximation of the gamma function (real argument)
 
-**Dependencies**: `Complex.ts`, `constants.ts`
+**Dependencies**: *None*
 
 # `lambertw.ts`
 **About**: Return function such that `W(x*e**x) = x`
@@ -37,6 +42,11 @@ This directory contains useful programs for maths-based activities.
 
 **Dependencies**: `Complex.ts`, `constants.ts`
 
+# `riemann-zeta.ts`
+**About**: Functions for evaluating the Riemann Zeta function, ζ
+
+**Dependencies**: `bernoulli.ts`
+
 # `Matrix.ts`
 **About**: Represent a matrix of complex numbers
 
@@ -46,3 +56,8 @@ This directory contains useful programs for maths-based activities.
 **About**: Return function `ω(z)` such that `w + log(w) = z`
 
 **Dependencies**: `Complex.ts`, `constants.ts`
+
+# `zgamma.ts`
+**About**: Approximation of the gamma function (complex argument)
+
+**Dependencies**: `Complex.ts`
