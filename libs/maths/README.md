@@ -7,6 +7,11 @@ This directory contains useful programs for maths-based activities.
 
 **Dependencies**: *None*
 
+# `catalan-beta.ts`
+**About**: Functions for evaluating the Catalan Beta function, β
+
+**Dependencies**: `gamma.ts`
+
 # `Complex.ts`
 **About**: Represent a complex number
 
@@ -21,6 +26,11 @@ This directory contains useful programs for maths-based activities.
 **About**: Functions for evaluating the Dirichlet Eta function, η
 
 **Dependencies**: `gamma.ts`
+
+# `dirichlet-lambda.ts`
+**About**: Functions for evaluating the Dirichlet Lambda function, λ
+
+**Dependencies**: `riemann-zeta.ts`
 
 # `exponential-integral.ts`
 **About**: Define several Exponential Integral functions

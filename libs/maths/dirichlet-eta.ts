@@ -2,6 +2,9 @@ import { gamma } from "./gamma";
 
 /** [!] http://www.mymathlib.com/functions/riemann_zeta.html#dirichlet_eta */
 
+/** Common notation for the Dirichlet Eta function */
+export const SYMBOL = "η";
+
 /**
  * Calculates the Eta function for real s
  * 

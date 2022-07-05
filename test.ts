@@ -1,8 +1,7 @@
-import { dirichletEta, riemannZeta } from "./libs/maths/riemann-zeta";
+import { catalanBeta } from "./libs/maths/catalan-beta";
 
 function main() {
-  window.zeta = riemannZeta;
-  window.eta = dirichletEta
+  window.beta = catalanBeta;
 }
 
-window.addEventListener("load", main); 
+window.addEventListener("load", main);

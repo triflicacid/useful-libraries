@@ -3,6 +3,9 @@
 import { bernoulliNumber } from "./bernoulli";
 import { dirichletEta, dirichletEtaStar } from "./dirichlet-eta";
 
+/** Common notation for the Dirichlet Eta function */
+export const SYMBOL = "ζ";
+
 //#region .data
 const CUTOFF = 66;
 const zetaStarK = [
