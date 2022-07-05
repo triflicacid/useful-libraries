@@ -42,6 +42,11 @@ This directory contains useful programs for maths-based activities.
 
 **Dependencies**: `constants.ts`
 
+# `fresnel-sin-cos-integrals.ts`
+**About**: unctions for evaluating various Fresnel sine and cosine integrals e.g. `S(x)`, `g(x)`
+
+**Dependencies**: `chebyshev-polynomials.ts`
+
 # `gamma.ts`
 **About**: Approximation of the gamma function (real argument)
 

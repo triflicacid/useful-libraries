@@ -50,7 +50,7 @@ export function chebyshevFirstSeries(x: number, a: number[], degree: number) {
   for (let k = degree; k >= 1; k--, yp2 = yp1, yp1 = y) {
     y = twox * yp1 - yp2 + a[k];
   }
-  return x * yp1 - yp2 * a[0];
+  return x * yp1 - yp2 + a[0];
 }
 //#endregion
 
@@ -107,7 +107,7 @@ export function chebyshevShiftedFirstSeries(x: number, a: number[], degree: numb
   for (let k = degree; k >= 1; k--, yp2 = yp1, yp1 = y) {
     y = fourx_m2 * yp1 - yp2 + a[k];
   }
-  return twox_m1 * yp1 - yp2 * a[0];
+  return twox_m1 * yp1 - yp2 + a[0];
 }
 //#endregion
 

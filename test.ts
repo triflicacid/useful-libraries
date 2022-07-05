@@ -1,11 +1,10 @@
-import * as sc from "./libs/maths/sin-cos-integrals";
+import { fresnelAuxiliaryCosIntegral, fresnelAuxiliarySinIntegral, fresnelCosIntegral, fresnelSinIntegral } from "./libs/maths/fresnel-sin-cos-integrals";
 
 function main() {
-  window.si = sc.sinIntegral
-  window.ci = sc.cosIntegral
-  window.cin = sc.entireCosineIntegral
-  window.fi = sc.auxiliarySinIntegral
-  window.gi = sc.auxiliaryCosIntegral
+  window.S = fresnelSinIntegral
+  window.Sin = fresnelAuxiliarySinIntegral
+  window.C = fresnelCosIntegral
+  window.Cin = fresnelAuxiliaryCosIntegral
 }
 
 window.addEventListener("load", main);
