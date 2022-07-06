@@ -42,6 +42,11 @@ This directory contains useful programs for maths-based activities.
 
 **Dependencies**: `riemann-zeta.ts`
 
+# `elliptic-integrals.ts`
+**About**: Functions for evaluating Elliptic integrals e.g. `\int sqrt(1 - k^2 sin^2(t)) dt`
+
+**Dependencies**: *None*
+
 # `exponential-integral.ts`
 **About**: Define several Exponential Integral functions
 

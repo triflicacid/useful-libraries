@@ -1,7 +1,7 @@
-import { dawsonIntegral } from "./libs/maths/dawson-integral";
+import { legendresEllipticIntegralFirst } from "./libs/maths/elliptic-integrals";
 
 function main() {
-  window.Daw = dawsonIntegral
+  window.El = legendresEllipticIntegralFirst
 }
 
 window.addEventListener("load", main);
