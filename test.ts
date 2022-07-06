@@ -1,10 +1,7 @@
-import { fresnelAuxiliaryCosIntegral, fresnelAuxiliarySinIntegral, fresnelCosIntegral, fresnelSinIntegral } from "./libs/maths/fresnel-sin-cos-integrals";
+import { dawsonIntegral } from "./libs/maths/dawson-integral";
 
 function main() {
-  window.S = fresnelSinIntegral
-  window.Sin = fresnelAuxiliarySinIntegral
-  window.C = fresnelCosIntegral
-  window.Cin = fresnelAuxiliaryCosIntegral
+  window.Daw = dawsonIntegral
 }
 
 window.addEventListener("load", main);

@@ -24,6 +24,15 @@ export function chebyshevFirst(x: number, n: number) {
 }
 
 /**
+ * Calculates the Chebyshev Roots of T_n (its roots)
+ * 
+ * cos((pi * (k + 0.5)) / n), k = 0, ... n-1
+ */
+export function chebyshevFirstRoots(n: number) {
+  return Array.from({ length: n }, (_, k) => Math.cos((Math.PI * (k + 0.5)) / n));
+}
+
+/**
  * Evaluates the Chebyshev polynomial of the first kind, T_n(x), using
  * the recurrence formula T[n+1](x) = 2x T[n](x) - T[n-1](x), T[0](x) = 1, T[1](x) = x
  * @returns array of values from T[0] up to T[max]
@@ -142,6 +151,15 @@ export function chebyshevSecond(x: number, n: number) {
     U1 = Un;
   }
   return Un;
+}
+
+/**
+ * Calculates the Chebyshev Roots of U_n
+ * 
+ * cos((pi * k) / (n + 1)), k = 1, ... n
+ */
+export function chebyshevSecondRoots(n: number) {
+  return Array.from({ length: n }, (_, k) => Math.cos(Math.PI * (k + 1) / (n + 1)));
 }
 
 /**

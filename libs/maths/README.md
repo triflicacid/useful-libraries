@@ -27,6 +27,11 @@ This directory contains useful programs for maths-based activities.
 
 **Dependencies**: *None*
 
+# `dawson-integral.ts`
+**About**: Function for evaluating the Dawson integral, Daw(x)
+
+**Dependencies**: `chebyshev-polynomials.ts`
+
 # `dirichlet-eta.ts`
 **About**: Functions for evaluating the Dirichlet Eta function, η
 
