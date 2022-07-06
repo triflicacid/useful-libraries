@@ -1,7 +1,7 @@
 {
   "name": "useful-libraries",
   "version": "1.0.0",
-  "description": "**NOTE** The libraries themselves are in `libs/`. Everything else is testing code.",
+  "description": "Collection of useful TypeScript modules",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

@@ -68,7 +68,7 @@ This directory contains useful programs for maths-based activities.
 **Dependencies**: `Complex.ts`, `constants.ts`
 
 # `polynomial.ts`
-**About**: Class of functions to solve or produce polynomials
+**About**: Class of functions to solve, produce and manipulate polynomials
 
 **Dependencies**: `Complex.ts`, `constants.ts`
 

@@ -17,11 +17,6 @@ export function polynomial(coeffs: Complex[]) {
   }
 }
 
-/** Return polynomial P(z) with given coefficients as a string */
-export function pstr(k: Complex[]) {
-  return k.map((z, i) => i === k.length - 1 ? z.toString() : ("(" + z.toString() + ")z" + (i === k.length - 2 ? "" : "^" + (3 - i)))).join(" + ");
-}
-
 /**
  * Solves a quadratic in the form ax^2 + bx + c
  * 
@@ -113,4 +108,261 @@ export function solveQuartic(a: Complex, b: Complex, c: Complex, d: Complex, e: 
     Complex.mult(-0.25, b).sub(Complex.mult(0.5, R)).sub(Complex.mult(0.5, D)), // z4 = -0.25b - 0.5R - 0.5D
   ] as Complex[];
   return roots;
+}
+
+/** Represents object describing a polynomial */
+export interface IPolynomial {
+  [degree: number]: number;
+}
+
+/** Represents object describing a polynomial with complex coefficients */
+export interface IZPolynomial {
+  [degree: number]: Complex;
+}
+
+/** evaluate polynomial p(x) at given x */
+export function poly_eval(p: IPolynomial, x: number) {
+  return Object.keys(p).reduce((s, c) => s + p[c] * Math.pow(x, +c), 0);
+}
+
+/** evaluate complex polynomial p(z) at given z */
+export function poly_zeval(p: IZPolynomial, x: Complex) {
+  return Object.keys(p).reduce((s, c) => s.add(Complex.mult(p[c], Complex.pow(x, +c))), new Complex(0));
+}
+
+/** return c1 + c2 */
+export function poly_add(c1: IPolynomial, c2: IPolynomial) {
+  const c3: IPolynomial = {};
+  for (let deg in c1) if (!isNaN(parseInt(deg))) c3[deg] = deg in c2 ? c1[deg] + c2[deg] : c1[deg];
+  for (let deg in c2) if (!(deg in c3) && !isNaN(parseInt(deg))) c3[deg] = deg in c1 ? c1[deg] + c2[deg] : c2[deg];
+  return c3;
+}
+
+/** return c1 + c2 for complex p(z) */
+export function poly_zadd(c1: IZPolynomial, c2: IZPolynomial) {
+  const c3: IZPolynomial = {};
+  for (let deg in c1) if (!isNaN(parseInt(deg))) c3[deg] = deg in c2 ? Complex.add(c1[deg], c2[deg]) : c1[deg].copy();
+  for (let deg in c2) if (!(deg in c3) && !isNaN(parseInt(deg))) c3[deg] = deg in c1 ? Complex.add(c1[deg], c2[deg]) : c2[deg].copy();
+  return c3;
+}
+
+/** return -c */
+export function poly_neg(c: IPolynomial) {
+  const nc: IPolynomial = {};
+  for (let deg in c) if (!isNaN(parseInt(deg))) nc[deg] = -c[deg];
+  return nc;
+}
+
+/** return -c for complex p(z) */
+export function poly_zneg(c: IZPolynomial) {
+  const nc: IZPolynomial = {};
+  for (let deg in c) if (!isNaN(parseInt(deg))) nc[deg] = c[deg].neg();
+  return nc;
+}
+
+/** return c1 * c2 */
+export function poly_mul(c1: IPolynomial, c2: IPolynomial) {
+  const c3: IPolynomial = {};
+  for (let deg1 in c1) if (!isNaN(parseInt(deg1))) {
+    const d1 = parseInt(deg1);
+    for (let deg2 in c2) if (!isNaN(parseInt(deg2))) {
+      const d2 = parseInt(deg2), d3 = d1 + d2;
+      if (!(d3 in c3)) c3[d3] = 0;
+      c3[d3] += c1[d1] * c2[d2];
+    }
+  }
+  return c3;
+}
+
+/** return c1 * c2 for complex p(z) */
+export function poly_zmul(c1: IZPolynomial, c2: IZPolynomial) {
+  const c3: IZPolynomial = {};
+  for (let deg1 in c1) if (!isNaN(parseInt(deg1))) {
+    const d1 = parseInt(deg1);
+    for (let deg2 in c2) if (!isNaN(parseInt(deg2))) {
+      const d2 = parseInt(deg2), d3 = d1 + d2;
+      if (!(d3 in c3)) c3[d3] = new Complex(0);
+      c3[d3].add(Complex.mult(c1[d1], c2[d2]));
+    }
+  }
+  return c3;
+}
+
+/** return a / b and the remainder: [result, remainder] */
+export function poly_div(a: IPolynomial, b: IPolynomial) {
+  const res: IPolynomial = {};
+  a = { ...a };
+  let adegs = Object.keys(a).sort().reverse().map(k => parseInt(k)).filter(d => !isNaN(d)), admax = adegs[0], admin = adegs[adegs.length - 1];
+  let bdegs = Object.keys(b).sort().reverse().map(k => parseInt(k)).filter(d => !isNaN(d)), bdmax = bdegs[0];
+  for (let d = admax, off = 0; d >= admin; --d, ++off) {
+    if (off === admax) break; // No more terms?
+    let c = a[d] / b[bdmax]; // Divide leading coefficients
+    res[d - bdmax] = c;
+    for (let i = 0; i < bdegs.length; i++) {
+      let bd = bdmax - i, ad = admax - off - i;
+      a[ad] = a[ad] === undefined ? -c * b[bd] : a[ad] - c * b[bd];
+      if (a[ad] === 0) delete a[ad];
+    }
+  }
+  return [res, a];
+}
+
+/** return a / b and the remainder for complex p(z): [result, remainder] */
+export function poly_zdiv(a: IZPolynomial, b: IZPolynomial) {
+  const res: IZPolynomial = {};
+  a = { ...a };
+  let adegs = Object.keys(a).sort().reverse().map(k => parseInt(k)).filter(d => !isNaN(d)), admax = adegs[0], admin = adegs[adegs.length - 1];
+  let bdegs = Object.keys(b).sort().reverse().map(k => parseInt(k)).filter(d => !isNaN(d)), bdmax = bdegs[0];
+  for (let d = admax, off = 0; d >= admin; --d, ++off) {
+    if (off === admax) break; // No more terms?
+    let c = Complex.div(a[d], b[bdmax]); // Divide leading coefficients
+    res[d - bdmax] = c;
+    for (let i = 0; i < bdegs.length; i++) {
+      let bd = bdmax - i, ad = admax - off - i;
+      a[ad] = a[ad] === undefined ? Complex.mult(c, b[bd]).neg() : a[ad].sub(Complex.mult(c, b[bd]));
+      if (a[ad].a === 0 && a[ad].b === 0) delete a[ad];
+    }
+  }
+  return [res, a];
+}
+
+/** Given a polynomial p(x), return p'(x) */
+export function poly_differentiate(p: IPolynomial) {
+  return Object.keys(p).reduce((o, k) => {
+    if (+k !== 0) o[+k - 1] = p[k] * +k;
+    return o;
+  }, {});
+}
+
+/** Given a complex polynomial p(z), return p'(z) */
+export function poly_zdifferentiate(p: IZPolynomial) {
+  return Object.keys(p).reduce((o, k) => {
+    o[+k - 1] = Complex.mult(p[k], +k);
+    return o;
+  }, {});
+}
+
+/** Given a polynomial p'(x), return p(x)
+ * 
+ * **NB** constant=0, removes any x^-1 terms
+*/
+export function poly_integrate(p: IPolynomial) {
+  return Object.keys(p).reduce((o, k) => {
+    if (+k !== -1) o[+k + 1] = p[k] / (+k + 1);
+    return o;
+  }, {});
+}
+
+/** Given a complex polynomial p'(\), return p(z)
+ * 
+ * **NB** constant=0, removes any x^-1 terms
+*/
+export function poly_zintegrate(p: IPolynomial) {
+  return Object.keys(p).reduce((o, k) => {
+    if (+k !== -1) o[+k + 1] = Complex.div(p[k], +k + 1);
+    return o;
+  }, {});
+}
+
+/** return string from a polynomial object, p(x) */
+export function poly_str(c: IPolynomial, variable: string = 'x') {
+  let str = '';
+  for (let deg in c) if (!isNaN(parseInt(deg))) {
+    let d = parseInt(deg);
+    if (str === '') {
+      str += c[deg].toString();
+    } else {
+      str += ' ' + (c[deg] < 0 ? '-' : '+') + ' ' + Math.abs(c[deg]);
+    }
+    if (d !== 0) {
+      str += '*' + variable;
+      if (d !== 1) str += '^' + deg;
+    }
+  }
+  return str;
+}
+
+/** return string from a complex polynomial object, p(z) */
+export function poly_zstr(c: IZPolynomial, variable: string = 'z') {
+  let str = '';
+  for (let deg in c) if (!isNaN(parseInt(deg))) {
+    let d = parseInt(deg);
+    if (str === '') {
+      str += c[deg].toString();
+    } else {
+      str += ' + ' + c[deg].toString();
+    }
+    if (d !== 0) {
+      str += '*' + variable;
+      if (d !== 1) str += '^' + deg;
+    }
+  }
+  return str;
+}
+
+/**
+ * Given a reccurence relation `U[n+1]`, return `U[k]`
+ * @param a - recurrence relation coefficients
+ * @param initial - initial values i.e. `U[0]`
+ * @returns a function which, when called, returns U[k] | k>0.
+ * 
+ * `U[n+1] = Sum (a[i] U[n-i])`, i=`0` to `len(a)`
+ * 
+ * Example: `a = [2x, -1]`, `initial = [1, x]` would define `U[n+1] = 2x U[n] - U[n-1]`
+ */
+export function poly_reccurence(a: IPolynomial[], initial: IPolynomial[]) {
+  const U = [...initial];
+  function generate(k: number) {
+    for (let i = U.length; i <= k; i++)
+      for (let j = 0; j < a.length; j++)
+        U[i] = poly_add(U[i] || {}, poly_mul(a[j], U[i - 1 - j]));
+    return U;
+  }
+  return (k: number) => generate(k)[k];
+}
+
+/** Same as createRecurrence() but supports complex polynomials p(z) */
+export function poly_zreccurence(a: IZPolynomial[], initial: IZPolynomial[]) {
+  const U = [...initial];
+  function generate(k: number) {
+    for (let i = U.length; i <= k; i++)
+      for (let j = 0; j < a.length; j++)
+        U[i] = poly_zadd(U[i] || {}, poly_zmul(a[j], U[i - 1 - j]));
+    return U;
+  }
+  return (k: number) => generate(k)[k];
+}
+
+/**
+ * Given a polynomial string in terms of `variable`, parse it and return an polynomial object
+ */
+export function poly_parse(str: string, variable = 'x') {
+  const p: IPolynomial = {};
+  let n: number[] = [1, 0, 0], ni = 1;
+  for (let i = 0; i < str.length;) {
+    if (str[i] === ' ') ++i;
+    else if (/[0-9]/.test(str[i])) {
+      let s = i++;
+      while (/[0-9]/.test(str[i])) ++i;
+      let sgn = ni !== 1 && n[ni] < 0 ? -1 : 1;
+      n[ni] = sgn * parseInt(str.substring(s, i));
+      ++ni;
+    } else if (str[i] === '+' || str[i] === '-') {
+      if (n[1] !== 0) p[n[2]] = n[0] * n[1];
+      n = [str[i] === '-' ? -1 : 1, 0, 0];
+      ni = 1;
+      ++i;
+    } else if (str[i] === '^') {
+      n[ni = 2] = 1;
+      ++i;
+      if (str[i] === '+') i++;
+      else if (str[i] === '-') n[ni] = -1, i++;
+    } else if (str[i] === variable) {
+      n[2]++;
+      if (n[1] === 0) n[1] = 1;
+      ++i;
+    } else ++i;
+  }
+  if (n[1] !== 0) p[n[2]] = n[0] * n[1];
+  return p;
 }

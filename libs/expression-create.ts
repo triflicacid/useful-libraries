@@ -1,8 +1,6 @@
 import { Expression, OPERATORS_DEFAULT, OPERATORS_IMAG } from "./Expression";
 import { Complex } from "./maths/Complex";
 import * as constants from "./maths/constants";
-import { lambertw } from "./maths/lambertw";
-import { wrightomega_ext } from "./maths/wright-omega";
 
 /** Return new Expression */
 export function createExpression(expr?: string) {
@@ -37,6 +35,7 @@ function gen_vars(E: Expression) {
 
 /** Load real functions */
 function real_funcs(E: Expression) {
+  E.setSymbol("abs", Math.abs);
   E.setSymbol("cos", Math.cos);
   E.setSymbol("cosh", Math.cosh);
   E.setSymbol("arccos", Math.acosh);
@@ -59,6 +58,7 @@ function real_funcs(E: Expression) {
 function cplx_funcs(E: Expression) {
   E.setSymbol("Re", (z: Complex) => z.a);
   E.setSymbol("Im", (z: Complex) => z.b);
+  E.setSymbol("abs", Complex.abs);
   E.setSymbol("cos", Complex.cos);
   E.setSymbol("cosh", Complex.cosh);
   E.setSymbol("arccos", Complex.arccos);
@@ -77,6 +77,4 @@ function cplx_funcs(E: Expression) {
   E.setSymbol("cbrt", Complex.cbrt);
   E.setSymbol("exp", Complex.exp);
   E.setSymbol("ln", Complex.log);
-  E.setSymbol("lambertw", (z: Complex, k?: Complex, tol?: Complex) => lambertw(z, k?.a, tol?.a));
-  E.setSymbol("wrightomega", (z: Complex) => wrightomega_ext(z));
 }
