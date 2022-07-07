@@ -68,6 +68,11 @@ This directory contains useful programs for maths-based activities.
 
 **Dependencies**: *None*
 
+# `gaussian.ts`
+**About**: Calculate the Gaussian function, and related functions
+
+**Dependencies**: *None*
+
 # `lambertw.ts`
 **About**: Return function such that `W(x*e**x) = x`
 
