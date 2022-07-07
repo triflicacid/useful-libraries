@@ -42,6 +42,12 @@ This directory contains useful programs for maths-based activities.
 
 **Dependencies**: `riemann-zeta.ts`
 
+
+# `error-function.ts`
+**About**: Functions for approximating the error function, erf(x), and related functions
+
+**Dependencies**: `Complex.ts`
+
 # `elliptic-integrals.ts`
 **About**: Functions for evaluating Elliptic integrals e.g. `\int sqrt(1 - k^2 sin^2(t)) dt`
 
