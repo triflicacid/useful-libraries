@@ -72,6 +72,11 @@ This directory contains useful programs for maths-based activities.
 
 **Dependencies**: `Complex.ts`, `constants.ts`
 
+# `recurrence-relations.ts`
+**About**: Various common recurrence relations functions
+
+**Dependencies**: `polynomial.ts`
+
 # `riemann-zeta.ts`
 **About**: Functions for evaluating the Riemann Zeta function, ζ
 

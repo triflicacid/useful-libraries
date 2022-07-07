@@ -301,16 +301,16 @@ export function poly_zstr(c: IZPolynomial, variable: string = 'z') {
 }
 
 /**
- * Given a reccurence relation `U[n+1]`, return `U[k]`
+ * Given a recurrence relation `U[n+1]`, return `U[k]`
  * @param a - recurrence relation coefficients
  * @param initial - initial values i.e. `U[0]`
  * @returns a function which, when called, returns U[k] | k>0.
  * 
  * `U[n+1] = Sum (a[i] U[n-i])`, i=`0` to `len(a)`
  * 
- * Example: `a = [2x, -1]`, `initial = [1, x]` would define `U[n+1] = 2x U[n] - U[n-1]`
+ * Example: `a = [2x, -1]`, `initial = [1, x]` would define `U[n+1] = 2x U[n] - U[n-1]` with `U[0] = 1, U[1] = x`
  */
-export function poly_reccurence(a: IPolynomial[], initial: IPolynomial[]) {
+export function poly_recurrence(a: IPolynomial[], initial: IPolynomial[]) {
   const U = [...initial];
   function generate(k: number) {
     for (let i = U.length; i <= k; i++)
@@ -321,8 +321,8 @@ export function poly_reccurence(a: IPolynomial[], initial: IPolynomial[]) {
   return (k: number) => generate(k)[k];
 }
 
-/** Same as createRecurrence() but supports complex polynomials p(z) */
-export function poly_zreccurence(a: IZPolynomial[], initial: IZPolynomial[]) {
+/** Same as createRecurrence() but for complex polynomials p(z) */
+export function poly_zrecurrence(a: IZPolynomial[], initial: IZPolynomial[]) {
   const U = [...initial];
   function generate(k: number) {
     for (let i = U.length; i <= k; i++)
