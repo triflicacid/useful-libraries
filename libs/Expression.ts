@@ -117,7 +117,11 @@ function tokenifyExpression(expr: string, operators: IOperatorMap, numberOpts: I
       i += 1;
     } else if (expr[i] === '=') {
       token = {
-        type: TOKEN_OP, value: '=', args: 2, action: (a: string, b: number, symbols: SymbolMap) => (symbols.set(a, b), b), assoc: 'rtl', prec: 3
+        type: TOKEN_OP, value: '=', args: 2, action: (a: string, b: number, symbols: SymbolMap, constSymbols: SymbolMap) => {
+          if (constSymbols.has(a)) return { error: true, msg: `Cannot assign to constant value '${a}'` };
+          symbols.set(a, b);
+          return b;
+        }, assoc: 'rtl', prec: 3
       } as IOperator;
       i += 1;
     } else if (expr[i] === ',') {
@@ -204,10 +208,10 @@ function parseTokenCallOpts(tokens: Tokens, operators: IOperatorMap, numberOpts:
         else args[args.length - 1].push(T);
       });
       args = args.filter(ar => ar.length > 0).map(ar => expressionToRPN(ar));
-      let call = (f: Function, symbols: SymbolMap) => {
+      let call = (f: Function, symbols: SymbolMap, constSymbols: SymbolMap) => {
         const argValues: any[] = [];
         for (let arg of args) {
-          let o = evaluateExpression(arg, symbols, numberOpts);
+          let o = evaluateExpression(arg, symbols, constSymbols, numberOpts);
           if (o.error) return o;
           argValues.push(o.value);
         }
@@ -258,7 +262,7 @@ function expressionToRPN(original: Tokens) {
 }
 
 /** Parse an array of tokens to a numerical result */
-function evaluateExpression(tokens: Tokens, symbols: SymbolMap, numberOpts: IParseNumberOptions) {
+function evaluateExpression(tokens: Tokens, symbols: SymbolMap, constSymbols: SymbolMap, numberOpts: IParseNumberOptions) {
   if (tokens.length === 0) return { error: true, msg: `Empty expression` };
   // EVALUATE
   const stack: Tokens = [];
@@ -279,14 +283,15 @@ function evaluateExpression(tokens: Tokens, symbols: SymbolMap, numberOpts: IPar
         } else if (T.type === TOKEN_SYM) {
           if (j === 0 && OP.value === '=') args.push(T.value); // Push the symbol itself
           else if (T.value === numberOpts.imag) args.push(Complex.I); // Imaginary unit
-          else if (!symbols.has(T.value)) return { error: true, token: T, msg: `Unbound symbol referenced '${T.value}' in operator ${OP.value}` };
-          else args.push(symbols.get(T.value)); // Fetch symbol's value
+          else if (symbols.has(T.value)) args.push(symbols.get(T.value));
+          else if (constSymbols.has(T.value)) args.push(constSymbols.get(T.value));
+          else return { error: true, token: T, msg: `Unbound symbol referenced '${T.value}' in operator ${OP.value}` };
         } else {
           return { error: true, token: T, msg: `Invalid token type in operator ${OP.value}` };
         }
       }
       if (numberOpts.imag) args = args.map(z => typeof z === 'number' ? new Complex(z) : z); // Ensure all data values are Complex
-      let o = OP.action(...args, symbols);
+      let o = OP.action(...args, symbols, constSymbols);
       if (typeof o === 'object' && o.error) return o;
       stack.push({ type: TOKEN_NUM, value: typeof o === 'object' && o.value ? o.value : o } as IToken);
     }
@@ -297,8 +302,9 @@ function evaluateExpression(tokens: Tokens, symbols: SymbolMap, numberOpts: IPar
   if (stack[0].type === TOKEN_NUM) value = stack[0].value;
   else if (stack[0].type === TOKEN_SYM) {
     if (stack[0].value === numberOpts.imag) value = Complex.I as any;
-    else if (!symbols.has(stack[0].value)) return { error: 1, token: stack[0], msg: `Unbound symbol referenced '${stack[0].value}'` };
-    else value = symbols.get(stack[0].value);
+    else if (symbols.has(stack[0].value)) value = symbols.get(stack[0].value);
+    else if (constSymbols.has(stack[0].value)) value = constSymbols.get(stack[0].value);
+    else return { error: 1, token: stack[0], msg: `Unbound symbol referenced '${stack[0].value}'` };
   } else {
     return { error: true };
   }
@@ -321,6 +327,7 @@ export class Expression {
   private _raw: string;
   private _tokens: Tokens;
   private _symbols: SymbolMap = new Map();
+  public constSymbols: SymbolMap = new Map(); // Symbols whose values are not changed
   public readonly numberOpts: IParseNumberOptions;
 
   constructor(expr = '') {
@@ -385,7 +392,7 @@ export class Expression {
 
   /** Evaluate parsed string. */
   public evaluate() {
-    return evaluateExpression(this._tokens, this._symbols, this.numberOpts);
+    return evaluateExpression(this._tokens, this._symbols, this.constSymbols, this.numberOpts);
   }
 
   /** Return new Expression, copying symbolMap */
