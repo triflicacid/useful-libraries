@@ -414,6 +414,19 @@ export class Complex {
     return new Complex(Math.round(z.a * K) / K, Math.round(z.b * K) / K);
   }
 
+  /**
+   * Return the sign of a given complex number `z` lexigraphically
+   * - Return `sign(Re(z))` if `Im(z) = 0`
+   * - Return `sign(Im(z))` if `Im(z) = 0`
+   * - Else, return undefined
+  */
+  public static sign(z_: any) {
+    const z = Complex.parse(z_);
+    if (z.b === 0) return Math.sign(z.a);
+    if (z.a === 0) return Math.sign(z.b);
+    return undefined;
+  }
+
   /** Calculate Math.exp of a complex number */
   public static exp(z_: any) {
     // exp(a + bi) = e^a * [ cos(b) + isin(b) ]

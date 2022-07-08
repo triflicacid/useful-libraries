@@ -1,8 +1,8 @@
 import { Complex } from "./libs/maths/Complex";
-import { erfi } from "./libs/maths/error-function";
 
 function main() {
-  window.erfi = erfi
+  let z = new Complex(0, 8);
+  console.log(`exp(${z}) = ${Complex.exp(z)}`);
 }
 
 window.addEventListener("load", main);

@@ -4,13 +4,15 @@ import { IParseNumberOptions, parseNumber } from "./utils";
 interface IToken {
   type: number;
   value: any;
+  len?: number; // Length of tokens condensed to make this one. default=1
 }
 
 interface IOperator extends IToken {
   args: number;
-  action: Function;
-  assoc: 'rtl' | 'ltr',
-  prec: number,
+  action?: Function;
+  assoc: 'rtl' | 'ltr';
+  prec: number;
+  data?: any;
 }
 
 export interface IOperatorMap {
@@ -208,20 +210,9 @@ function parseTokenCallOpts(tokens: Tokens, operators: IOperatorMap, numberOpts:
         else args[args.length - 1].push(T);
       });
       args = args.filter(ar => ar.length > 0).map(ar => expressionToRPN(ar));
-      let call = (f: Function, symbols: SymbolMap, constSymbols: SymbolMap) => {
-        const argValues: any[] = [];
-        for (let arg of args) {
-          let o = evaluateExpression(arg, symbols, constSymbols, numberOpts);
-          if (o.error) return o;
-          argValues.push(o.value);
-        }
-        let x = f(...argValues, symbols);
-        if (typeof x === 'number') return numberOpts.imag ? new Complex(x) : x;
-        else if (x == undefined) return numberOpts.imag ? new Complex(0) : 0;
-        else return x;
-      };
-      let op = { type: TOKEN_OP, value: '()', args: 1, assoc: 'ltr', prec: 20, action: call } as IToken;
-      tokens.splice(j + 1, contents.length + 2, op);
+      const getlen = (t: Tokens) => t.reduce((p, c) => p + (c.len ?? 1), 0);
+      let op = { type: TOKEN_OP, value: '()', args: 1, assoc: 'ltr', prec: 20, action: undefined, data: args, len: getlen(contents) + 2 } as IOperator;
+      tokens.splice(j + 1, op.len as number, op);
       ++i;
     } else {
       ++i;
@@ -291,7 +282,26 @@ function evaluateExpression(tokens: Tokens, symbols: SymbolMap, constSymbols: Sy
         }
       }
       if (numberOpts.imag) args = args.map(z => typeof z === 'number' ? new Complex(z) : z); // Ensure all data values are Complex
-      let o = OP.action(...args, symbols, constSymbols);
+      let o: any;
+      if (OP.action) {
+        o = OP.action(...args, symbols, constSymbols);
+      } else if (OP.value === '()') {
+        // CALL
+        const f = args[0];
+        if (typeof f !== 'function') return { error: true, msg: `Operator '()' used on non-callable '${f}'` };
+        const argValues: any[] = [];
+        for (let arg of OP.data) {
+          let o = evaluateExpression(arg, symbols, constSymbols, numberOpts);
+          if (o.error) return o;
+          argValues.push(o.value);
+        }
+        let x = f(...argValues, symbols);
+        if (typeof x === 'number') o = numberOpts.imag ? new Complex(x) : x;
+        else if (x == undefined) o = numberOpts.imag ? new Complex(0) : 0;
+        else o = x;
+      } else {
+        return { error: true, msg: `Unknown operator '${OP.value}'` };
+      }
       if (typeof o === 'object' && o.error) return o;
       stack.push({ type: TOKEN_NUM, value: typeof o === 'object' && o.value ? o.value : o } as IToken);
     }
