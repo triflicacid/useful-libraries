@@ -3,16 +3,21 @@ import { createExpression } from "../libs/expression-create";
 
 function main() {
   const E = createExpression();
-  E.setSymbol("f", (x: number, E: Expression) => {
-    E.setError("HALT", 69);
-    return x + 1;
+  E.setSymbol("f", {
+    type: 'fn',
+    args: ['x'],
+    body: 'x * g(x)',
   });
-  E.setSymbol("g", (x: number) => x * x);
-  E.setSymbol("x", 2);
+  E.setSymbol("g", {
+    type: 'fn',
+    args: ['x'],
+    body: 'x + 1',
+  });
 
-  let val = E.load("f(x)").parse().evaluate();
+  let val = E.load("f(5)").parse().evaluate();
+  console.log(E.source);
   if (E.error) {
-    console.log(errorToString(E.error));
+    console.log(E.handleError());
   } else {
     console.log(val === undefined ? "nil" : val.toString());
   }

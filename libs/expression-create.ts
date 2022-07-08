@@ -22,56 +22,56 @@ export function createComplexExpression(expr?: string) {
 
 /** Load generic variables */
 function gen_vars(E: Expression) {
-  E.setSymbol("pi", constants.PI);
-  E.setSymbol("e", constants.E);
-  E.setSymbol("omega", constants.OMEGA);
-  E.setSymbol("phi", constants.PHI);
-  E.setSymbol("ln2", Math.LN2);
-  E.setSymbol("sqrt2", Math.SQRT2);
+  E.constSymbols.set("pi", constants.PI);
+  E.constSymbols.set("e", constants.E);
+  E.constSymbols.set("omega", constants.OMEGA);
+  E.constSymbols.set("phi", constants.PHI);
+  E.constSymbols.set("ln2", Math.LN2);
+  E.constSymbols.set("sqrt2", Math.SQRT2);
 }
 
 /** Load real functions */
 function real_funcs(E: Expression) {
-  E.setSymbol("abs", Math.abs);
-  E.setSymbol("cos", Math.cos);
-  E.setSymbol("cosh", Math.cosh);
-  E.setSymbol("arccos", Math.acosh);
-  E.setSymbol("arcosh", Math.acosh);
-  E.setSymbol("sin", Math.sin);
-  E.setSymbol("sinh", Math.sinh);
-  E.setSymbol("arcsin", Math.asin);
-  E.setSymbol("arsinh", Math.asinh);
-  E.setSymbol("tan", Math.tan);
-  E.setSymbol("tanh", Math.tanh);
-  E.setSymbol("arctan", Math.atan);
-  E.setSymbol("artanh", Math.atanh);
-  E.setSymbol("sqrt", Math.sqrt);
-  E.setSymbol("cbrt", Math.cbrt);
-  E.setSymbol("exp", Math.exp);
-  E.setSymbol("ln", Math.log);
+  E.constSymbols.set("abs", Math.abs);
+  E.constSymbols.set("cos", Math.cos);
+  E.constSymbols.set("cosh", Math.cosh);
+  E.constSymbols.set("arccos", Math.acosh);
+  E.constSymbols.set("arcosh", Math.acosh);
+  E.constSymbols.set("sin", Math.sin);
+  E.constSymbols.set("sinh", Math.sinh);
+  E.constSymbols.set("arcsin", Math.asin);
+  E.constSymbols.set("arsinh", Math.asinh);
+  E.constSymbols.set("tan", Math.tan);
+  E.constSymbols.set("tanh", Math.tanh);
+  E.constSymbols.set("arctan", Math.atan);
+  E.constSymbols.set("artanh", Math.atanh);
+  E.constSymbols.set("sqrt", Math.sqrt);
+  E.constSymbols.set("cbrt", Math.cbrt);
+  E.constSymbols.set("exp", Math.exp);
+  E.constSymbols.set("ln", Math.log);
 }
 
 /** Load complex functions */
 function cplx_funcs(E: Expression) {
-  E.setSymbol("Re", (z: Complex) => z.a);
-  E.setSymbol("Im", (z: Complex) => z.b);
-  E.setSymbol("abs", Complex.abs);
-  E.setSymbol("cos", Complex.cos);
-  E.setSymbol("cosh", Complex.cosh);
-  E.setSymbol("arccos", Complex.arccos);
-  E.setSymbol("arcosh", Complex.arccosh);
-  E.setSymbol("sin", Complex.sin);
-  E.setSymbol("sinh", Complex.sinh);
-  E.setSymbol("arcsin", Complex.arcsin);
-  E.setSymbol("arsinh", Complex.arcsinh);
-  E.setSymbol("tan", Complex.tan);
-  E.setSymbol("tanh", Complex.tanh);
-  E.setSymbol("arctan", Complex.arctan);
-  E.setSymbol("artanh", Complex.arctanh);
-  E.setSymbol("arg", (z: Complex) => z.getArg());
-  E.setSymbol("conj", (z: Complex) => z.conjugate());
-  E.setSymbol("sqrt", Complex.sqrt);
-  E.setSymbol("cbrt", Complex.cbrt);
-  E.setSymbol("exp", Complex.exp);
-  E.setSymbol("ln", Complex.log);
+  E.constSymbols.set("Re", (z: Complex) => z.a);
+  E.constSymbols.set("Im", (z: Complex) => z.b);
+  E.constSymbols.set("abs", Complex.abs);
+  E.constSymbols.set("cos", Complex.cos);
+  E.constSymbols.set("cosh", Complex.cosh);
+  E.constSymbols.set("arccos", Complex.arccos);
+  E.constSymbols.set("arcosh", Complex.arccosh);
+  E.constSymbols.set("sin", Complex.sin);
+  E.constSymbols.set("sinh", Complex.sinh);
+  E.constSymbols.set("arcsin", Complex.arcsin);
+  E.constSymbols.set("arsinh", Complex.arcsinh);
+  E.constSymbols.set("tan", Complex.tan);
+  E.constSymbols.set("tanh", Complex.tanh);
+  E.constSymbols.set("arctan", Complex.arctan);
+  E.constSymbols.set("artanh", Complex.arctanh);
+  E.constSymbols.set("arg", (z: Complex) => z.getArg());
+  E.constSymbols.set("conj", (z: Complex) => z.conjugate());
+  E.constSymbols.set("sqrt", Complex.sqrt);
+  E.constSymbols.set("cbrt", Complex.cbrt);
+  E.constSymbols.set("exp", Complex.exp);
+  E.constSymbols.set("ln", Complex.log);
 }

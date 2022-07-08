@@ -7,7 +7,8 @@ interface IToken {
   type: number;
   value: any;
   pos: number; // Original position in string
-  len?: number; // Length of tokens condensed to make this one. default=1
+  posend: number; // Ending position
+  tlen?: number; // Length of tokens condensed to make this one. default=1
 }
 
 /** Describes a token representing an operator */
@@ -42,6 +43,22 @@ interface IEvaluationError {
   error: true;
   msg: string; // Error message
   token: Token; // Token error happened at
+}
+
+/** Represents an item in the callstack */
+interface ICallStackItem {
+  name: string; // Function name
+  symbols: SymbolMap;
+  token?: Token; // Invoker token
+}
+
+/** Object describing a user-defined function */
+export interface IFunction {
+  type: "fn";
+  args: string[]; // array of arguments
+  defaults?: (SymbolValue | undefined)[]; // Default arguments: if args[i] not provided, defaults[i] is used
+  body: string; // valid string expression
+  tokens?: Tokens | undefined; // parsed this.body
 }
 //#endregion
 
@@ -108,43 +125,43 @@ function tokenifyExpression(source: string, E: Expression): IParseSuccess | IPar
       i += source[i].length;
       continue;
     } else if (source[i] === '*' && source[i + 1] === '*') {
-      token = { type: TOKEN_OP, value: '**', args: 2, action: E.operators["**"], assoc: 'rtl', prec: 16, pos: i } as IOperator;
+      token = { type: TOKEN_OP, value: '**', args: 2, action: E.operators["**"], assoc: 'rtl', prec: 16, pos: i, posend: i + 1 } as IOperator;
       i += 2;
     } else if (source[i] === '=' && source[i + 1] === '=') {
-      token = { type: TOKEN_OP, value: '==', args: 2, action: E.operators["=="], assoc: 'ltr', prec: 9, pos: i } as IOperator;
+      token = { type: TOKEN_OP, value: '==', args: 2, action: E.operators["=="], assoc: 'ltr', prec: 9, pos: i, posend: i + 1 } as IOperator;
       i += 2;
     } else if (source[i] === '!' && source[i + 1] === '=') {
-      token = { type: TOKEN_OP, value: '!=', args: 2, action: E.operators["!="], assoc: 'ltr', prec: 9, pos: i } as IOperator;
+      token = { type: TOKEN_OP, value: '!=', args: 2, action: E.operators["!="], assoc: 'ltr', prec: 9, pos: i, posend: i + 1 } as IOperator;
       i += 2;
     } else if (source[i] === '<' && source[i + 1] === '=') {
-      token = { type: TOKEN_OP, value: '<=', args: 2, action: E.operators["<="], assoc: 'ltr', prec: 10, pos: i } as IOperator;
+      token = { type: TOKEN_OP, value: '<=', args: 2, action: E.operators["<="], assoc: 'ltr', prec: 10, pos: i, posend: i + 1 } as IOperator;
       i += 2;
     } else if (source[i] === '>' && source[i + 1] === '=') {
-      token = { type: TOKEN_OP, value: '>=', args: 2, action: E.operators[">="], assoc: 'ltr', prec: 10, pos: i } as IOperator;
+      token = { type: TOKEN_OP, value: '>=', args: 2, action: E.operators[">="], assoc: 'ltr', prec: 10, pos: i, posend: i + 1 } as IOperator;
       i += 2;
     } else if (source[i] === '!') {
-      token = { type: TOKEN_OP, value: '!', args: 1, action: E.operators["!"], assoc: 'rtl', prec: 17, pos: i } as IOperator;
+      token = { type: TOKEN_OP, value: '!', args: 1, action: E.operators["!"], assoc: 'rtl', prec: 17, pos: i, posend: i } as IOperator;
       i += 1;
     } else if (source[i] === '>') {
-      token = { type: TOKEN_OP, value: '>', args: 2, action: E.operators[">"], assoc: 'ltr', prec: 10, pos: i } as IOperator;
+      token = { type: TOKEN_OP, value: '>', args: 2, action: E.operators[">"], assoc: 'ltr', prec: 10, pos: i, posend: i } as IOperator;
       i += 1;
     } else if (source[i] === '<') {
-      token = { type: TOKEN_OP, value: '<', args: 2, action: E.operators["<"], assoc: 'ltr', prec: 10, pos: i } as IOperator;
+      token = { type: TOKEN_OP, value: '<', args: 2, action: E.operators["<"], assoc: 'ltr', prec: 10, pos: i, posend: i } as IOperator;
       i += 1;
     } else if (source[i] === '/') {
-      token = { type: TOKEN_OP, value: '/', args: 2, action: E.operators["/"], assoc: 'ltr', prec: 15, pos: i } as IOperator;
+      token = { type: TOKEN_OP, value: '/', args: 2, action: E.operators["/"], assoc: 'ltr', prec: 15, pos: i, posend: i } as IOperator;
       i += 1;
     } else if (source[i] === '%') {
-      token = { type: TOKEN_OP, value: '%', args: 2, action: E.operators["%"], assoc: 'ltr', prec: 15, pos: i } as IOperator;
+      token = { type: TOKEN_OP, value: '%', args: 2, action: E.operators["%"], assoc: 'ltr', prec: 15, pos: i, posend: i } as IOperator;
       i += 1;
     } else if (source[i] === '*') {
-      token = { type: TOKEN_OP, value: '*', args: 2, action: E.operators["*"], assoc: 'ltr', prec: 15, pos: i } as IOperator;
+      token = { type: TOKEN_OP, value: '*', args: 2, action: E.operators["*"], assoc: 'ltr', prec: 15, pos: i, posend: i } as IOperator;
       i += 1;
     } else if (source[i] === '+') {
-      token = { type: TOKEN_OP, value: '+', args: 2, action: E.operators["+"], assoc: 'ltr', prec: 14, pos: i } as IOperator;
+      token = { type: TOKEN_OP, value: '+', args: 2, action: E.operators["+"], assoc: 'ltr', prec: 14, pos: i, posend: i } as IOperator;
       i += 1;
     } else if (source[i] === '-') {
-      token = { type: TOKEN_OP, value: '-', args: 2, action: E.operators["-"], assoc: 'ltr', prec: 14, pos: i } as IOperator;
+      token = { type: TOKEN_OP, value: '-', args: 2, action: E.operators["-"], assoc: 'ltr', prec: 14, pos: i, posend: i } as IOperator;
       i += 1;
     } else if (source[i] === '=') {
       token = {
@@ -152,24 +169,24 @@ function tokenifyExpression(source: string, E: Expression): IParseSuccess | IPar
           if (constSymbols.has(a)) return { error: true, msg: `Cannot assign to constant value '${a}'` };
           symbols.set(a, b);
           return b;
-        }, assoc: 'rtl', prec: 3, pos: i
+        }, assoc: 'rtl', prec: 3, pos: i, posend: i
       } as IOperator;
       i += 1;
     } else if (source[i] === ',') {
-      token = { type: TOKEN_OP, value: ',', args: 2, action: (a: string, b: number) => b, assoc: 'ltr', prec: 1, pos: i } as IOperator;
+      token = { type: TOKEN_OP, value: ',', args: 2, action: (a: string, b: number) => b, assoc: 'ltr', prec: 1, pos: i, posend: i } as IOperator;
       i += 1;
     } else if (source[i] === '(' || source[i] === ')') {
-      token = { type: TOKEN_OP, value: source[i], pos: i } as IOperator;
+      token = { type: TOKEN_OP, value: source[i], pos: i, posend: i } as IOperator;
       i += 1;
     } else {
       if (/[A-Za-z_$]/.test(source[i])) {
         let j = i, symbol = source[i++];
         while (source[i] && /[A-Za-z$_0-9]/.test(source[i])) symbol += source[i++];
-        token = { type: TOKEN_SYM, value: symbol, pos: j } as IToken;
+        token = { type: TOKEN_SYM, value: symbol, pos: j, posend: i - 1 } as IToken;
       } else {
         let nobj = parseNumber(source.substring(i), E.numberOpts);
         if (nobj.str.length !== 0) {
-          token = { type: TOKEN_NUM, value: nobj.imag ? new Complex(0, nobj.num) : nobj.num, pos: i } as IToken;
+          token = { type: TOKEN_NUM, value: nobj.imag ? new Complex(0, nobj.num) : nobj.num, pos: i, posend: i + nobj.str.length } as IToken;
           i += nobj.str.length;
         }
       }
@@ -179,7 +196,7 @@ function tokenifyExpression(source: string, E: Expression): IParseSuccess | IPar
       tokens.push(token);
     } else {
       tokens.length = 0;
-      return { error: true, pos: i, msg: `Unknown token encountered '${source[i]}'` } as IParseError;
+      return { error: true, pos: i, posend: i, msg: `Unknown token encountered '${source[i]}'` } as IParseError;
     }
   }
 
@@ -237,9 +254,9 @@ function parseTokenCallOpts(tokens: Tokens, E: Expression): IParseSuccess | IPar
         else args[args.length - 1].push(T);
       });
       args = args.filter(ar => ar.length > 0).map(ar => tokensToRPN(ar));
-      const getlen = (t: Tokens) => t.reduce((p, c) => p + (c.len ?? 1), 0);
-      let op = { type: TOKEN_OP, value: '()', args: 1, assoc: 'ltr', prec: 20, action: undefined, data: args, len: getlen(contents) + 2, pos: i + 1 } as IOperator;
-      tokens.splice(j + 1, op.len as number, op);
+      const getlen = (t: Tokens) => t.reduce((p, c) => p + (c.tlen ?? 1), 0);
+      let op = { type: TOKEN_OP, value: '()', args: 1, assoc: 'ltr', prec: 20, action: undefined, data: args, tlen: getlen(contents) + 2, pos: tokens[j].pos, posend: tokens[i].posend } as IOperator;
+      tokens.splice(j + 1, op.tlen as number, op);
       ++i;
     } else {
       ++i;
@@ -315,17 +332,43 @@ function evaluateExpression(tokens: Tokens, E: Expression): ReturnValue {
       } else if (OP.value === '()') {
         // CALL
         const f = args[0];
-        if (typeof f !== 'function') return void (E.error = { error: true, token: OP, msg: `Operator '()' used on non-callable '${f}'` } as IEvaluationError);
+        E.push(argTokens[0].value, OP); // PUSH CALLSTACK
         const argValues: any[] = [];
         for (let arg of OP.data) {
           let a = evaluateExpression(arg, E);
           if (E.error) return; // Propagate error
           argValues.push(a);
         }
-        let x = f(...argValues, E) as ReturnValue;
+        let x: ReturnValue;
+        if (typeof f === 'function') {
+          try {
+            x = f(...argValues, E);
+          } catch (e) {
+            E.error = { error: true, msg: e instanceof Error ? e.message : e.toString(), token: OP };
+            return;
+          }
+        } else if (typeof f === 'object' && f.type === 'fn') {
+          const fn = f as IFunction;
+          if (argValues.length > fn.args.length) {
+            E.pop();
+            return void (E.error = { error: true, token: OP, msg: `Function ${argTokens[0].value} expected ${fn.args.length} arguments, got ${argValues.length}` });
+          }
+          for (let i = 0; i < fn.args.length; ++i) {
+            if (argValues[i] === undefined && (fn.defaults === undefined || fn.defaults[i] === undefined)) {
+              E.pop();
+              return void (E.error = { error: true, token: OP, msg: `Function ${argTokens[0].value}: no value provided for argument '${fn.args[i]}'` });
+            }
+            E.defSymbol(fn.args[i], argValues[i] ?? (fn.defaults as SymbolValue[])[i]);
+          }
+          x = evaluateExpression(fn.tokens as Tokens, E);
+          if (E.error) return; // Propagate error
+        } else {
+          return void (E.error = { error: true, token: OP, msg: `Operator '()' used on non-callable '${f}'` } as IEvaluationError);
+        }
         if (typeof x === 'number') val = E.numberOpts.imag ? new Complex(x) : x;
         else if (x == undefined) val = E.numberOpts.imag ? new Complex(0) : 0;
         else val = x;
+        E.pop(); // POP CALLSTACK
       } else {
         return void (E.error = { error: true, token: OP, msg: `Unknown operator '${OP.value}'` } as IEvaluationError);
       }
@@ -370,9 +413,10 @@ const TOKEN_SYM = 4;
 
 type Token = IToken | IOperator;
 type Tokens = Array<Token>;
-type SymbolMap = Map<string, number | Function>;
-type ReturnValue = number | Complex | undefined;
-type ExprError = IParseError | IEvaluationError | undefined;
+type SymbolValue = number | Complex | Function | IFunction; // Value of a symbol
+type SymbolMap = Map<string, SymbolValue>;
+type ReturnValue = number | Complex | undefined; // Return valid from evaluate()
+type ExprError = IParseError | IEvaluationError | undefined; // Error types
 
 /** 
  * Creates an expression, which may be parsed and executed.
@@ -380,16 +424,16 @@ type ExprError = IParseError | IEvaluationError | undefined;
  * Expression.numberOpts allows customision on numerical parsing.
 */
 export class Expression {
-  private _raw: string;
+  public source: string;
   private _tokens: Tokens;
-  private _symbols: SymbolMap = new Map();
   public constSymbols: SymbolMap = new Map(); // Symbols whose values are not changed
   public operators: IOperatorMap = OPERATORS_DEFAULT; // Operators to be used in parsing
   public error: ExprError; // Current error
+  public callstack: ICallStackItem[] = [];
   public readonly numberOpts: IParseNumberOptions;
 
   constructor(expr = '') {
-    this._raw = expr;
+    this.source = expr;
     this._tokens = [];
     this.numberOpts = {
       exponent: true, // Allow exponent e.g. "1e2"
@@ -398,46 +442,66 @@ export class Expression {
       signed: false, // Dont scan for +/- sign
       imag: undefined, // Disallow
     };
+    this.callstack.push({ name: '_MAIN', symbols: new Map() }); // Initialise call stack
   }
 
   /** Reset symbol map and expression data */
   public reset() {
     this._tokens.length = 0;
-    this._symbols.clear();
+    this.callstack.length = 1;
+    this.callstack[0].symbols.clear();
     return this;
   }
 
   /** Load new raw expression string */
   public load(expr: string) {
     this._tokens.length = 0;
-    this._raw = expr;
+    this.source = expr;
     return this;
   }
 
-  /** Get original expression string */
-  public getOriginal() {
-    return this._raw;
+  /** Define given symbol in topmost scope */
+  public defSymbol(name: string, value: SymbolValue = 0) {
+    this.callstack[this.callstack.length - 1].symbols.set(name, value);
+    return this;
   }
 
-  /** Set value of given symbol */
-  public setSymbol(name: string, value: number | Function) {
-    this._symbols.set(name, value);
+  /** Set value of existing symbol to a value. If symbol does not exist, create it in the topmost scope. */
+  public setSymbol(name: string, value: SymbolValue) {
+    if (this.callstack.length === 0) return this;
+    for (let i = this.callstack.length - 1; i >= 0; --i) {
+      if (this.callstack[i].symbols.has(name)) {
+        this.callstack[i].symbols.set(name, value);
+        return this;
+      }
+    }
+    this.callstack[this.callstack.length - 1].symbols.set(name, value);
     return this;
   }
 
   /** Does the given symbol exist? */
   public hasSymbol(name: string) {
-    return this._symbols.has(name);
+    return this.callstack.some(({ symbols }) => symbols.has(name));
   }
 
   /** Get value of given symbol, or undefined */
   public getSymbol(name: string) {
-    return this._symbols.get(name);
+    for (let i = this.callstack.length - 1; i >= 0; --i) {
+      if (this.callstack[i].symbols.has(name)) {
+        return this.callstack[i].symbols.get(name);
+      }
+    }
+    return undefined;
   }
 
-  /** Delete given symbol */
+  /** Delete first occurence of a given symbol */
   public delSymbol(name: string) {
-    this._symbols.delete(name);
+    for (let i = this.callstack.length - 1; i >= 0; --i) {
+      if (this.callstack[i].symbols.has(name)) {
+        this.callstack[i].symbols.delete(name);
+        break;
+      }
+    }
     return this;
   }
 
@@ -446,11 +510,80 @@ export class Expression {
     this.error = { error: true, msg, pos };
   }
 
+  /**
+   * Handle the error:
+   * - Empty call stack
+   * - Remove error flag
+   * - Return error as string
+  */
+  public handleError() {
+    if (this.error) {
+      let msg = errorToString(this.error);
+      if (this.error && (this.error as IEvaluationError).token) {
+        const e = this.error as IEvaluationError;
+        const fname = this.callstack[this.callstack.length - 1].name, fval = this.getSymbol(fname);
+        let source = fval && typeof fval === "object" && (fval as any).type === "fn" ? (fval as IFunction).body : this.source;
+        let snippet = source.substring(e.token.pos, e.token.posend + 1);
+        msg += '\n  ' + snippet + '\n  ' + '~'.repeat(snippet.length);
+      }
+
+      const stack: string[] = [];
+      for (let i = 0; i < this.callstack.length; i++) {
+        let frame = this.callstack[i], str = `In function <${frame.name}>`;
+        if (frame.token) {
+          str += ` at position ${frame.token.pos}:`;
+          const fname = this.callstack[i - 1]?.name, fval = fname ? this.getSymbol(fname) : undefined;
+          let source = fval && typeof fval === "object" && (fval as any).type === "fn" ? (fval as IFunction).body : this.source;
+          let snippet = source.substring(frame.token.pos, frame.token.posend + 1);
+          str += '\n  ' + snippet + '\n  ' + '~'.repeat(snippet.length);
+        } else {
+          str += ':';
+        }
+        stack.push(str);
+      }
+      this.callstack.length = 1;
+      this.error = undefined;
+      return stack.join("\n") + "\n" + msg;
+    } else {
+      return;
+    }
+  }
+
+  /** Push iterm to the call stack */
+  public push(name: string, invoker?: Token) {
+    this.callstack.push({ name, symbols: new Map(), token: invoker });
+    return this;
+  }
+
+  /** Pop item from the call stack */
+  public pop() {
+    this.callstack.pop();
+    return this;
+  }
+
   /** Parse raw to token array */
   public parse() {
     this.error = undefined;
+    this.callstack.length = 1;
     this._tokens.length = 0;
-    const o = parseExpression(this._raw, this);
+
+    // PARSE FUNCTIONS FIRST
+    for (let i = 0; i < this.callstack.length; i++) {
+      for (let [key, value] of this.callstack[i].symbols) {
+        if (typeof value === "object" && (value as any).type === "fn" && !(value as IFunction).tokens) {
+          const fn = value as IFunction;
+          let o = parseExpression(fn.body, this);
+          if (o.error) {
+            this.error = o;
+            return this;
+          } else {
+            fn.tokens = tokensToRPN(o.tokens);
+          }
+        }
+      }
+    }
+
+    const o = parseExpression(this.source, this);
     if (o.error) {
       this.error = o; // !ERROR!
     } else {
@@ -468,10 +601,10 @@ export class Expression {
     return evaluateExpression(this._tokens, this);
   }
 
-  /** Return new Expression, copying symbolMap */
-  public copy(expr = undefined) {
-    let E = new Expression(expr);
-    this._symbols.forEach((v, k) => E._symbols.set(k, v));
-    return E;
-  }
+  // /** Return new Expression, copying symbolMap */
+  // public copy(expr = undefined) {
+  //   let E = new Expression(expr);
+  //   this._symbols.forEach((v, k) => E._symbols.set(k, v));
+  //   return E;
+  // }
 } 
