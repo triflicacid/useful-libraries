@@ -1,26 +1,23 @@
-import { Expression, OPERATORS_DEFAULT, OPERATORS_IMAG } from "./Expression";
+import { Expression, OPERATORS_IMAG } from "./Expression";
 import { Complex } from "./maths/Complex";
 import * as constants from "./maths/constants";
 
 /** Return new Expression */
 export function createExpression(expr?: string) {
   const E = new Expression();
-  const parse = (expr: string) => E.load(expr).parse(OPERATORS_DEFAULT);
   gen_vars(E);
   real_funcs(E);
-  if (expr) parse(expr);
-  return { expr: E, parse };
+  return E;
 }
 
 /** Return new Expression for complex numbers */
 export function createComplexExpression(expr?: string) {
   const E = new Expression();
-  const parse = (expr: string) => E.load(expr).parse(OPERATORS_IMAG);
   E.numberOpts.imag = 'i';
+  E.operators = OPERATORS_IMAG;
   gen_vars(E);
   cplx_funcs(E);
-  if (expr) parse(expr);
-  return { expr: E, parse };
+  return E;
 }
 
 /** Load generic variables */

@@ -1,23 +1,21 @@
+import { errorToString, Expression } from "../libs/Expression";
 import { createExpression } from "../libs/expression-create";
 
 function main() {
-  const { expr, parse } = createExpression();
-  expr.setSymbol("f", (x: number) => {
-    console.log("CALL f with " + x);
-    return x + 0;
+  const E = createExpression();
+  E.setSymbol("f", (x: number, E: Expression) => {
+    E.setError("HALT", 69);
+    return x + 1;
   });
-  expr.setSymbol("g", (x: number) => {
-    console.log("CALL g with " + x);
-    return x ** 2;
-  });
-  parse("f(g(x) + 1)");
-  expr.setSymbol("x", 2);
-  console.log(tostr(expr.evaluate()));
-}
+  E.setSymbol("g", (x: number) => x * x);
+  E.setSymbol("x", 2);
 
-function tostr(o) {
-  console.log(o)
-  return o.error ? "[ERROR] " + o.msg : o.value.toString();
+  let val = E.load("f(x)").parse().evaluate();
+  if (E.error) {
+    console.log(errorToString(E.error));
+  } else {
+    console.log(val === undefined ? "nil" : val.toString());
+  }
 }
 
 window.addEventListener("load", main); 
