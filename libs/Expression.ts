@@ -92,7 +92,7 @@ export const OPERATORS_IMAG: IOperatorMap = {
   "+": Complex.add,
   "-": Complex.sub,
   "u+": (z: Complex) => z,
-  "u-": (z: Complex) => Complex.mult(z, -1),
+  "u-": (z: Complex) => z.neg(),
   "==": (a: Complex, b: Complex) => new Complex(+Complex.eq(a, b)),
   "!=": (a: Complex, b: Complex) => new Complex(+!Complex.eq(a, b)),
   ">": (a: Complex, b: Complex) => new Complex(+Complex.gt(a, b)),
@@ -165,9 +165,8 @@ function tokenifyExpression(source: string, E: Expression): IParseSuccess | IPar
       i += 1;
     } else if (source[i] === '=') {
       token = {
-        type: TOKEN_OP, value: '=', args: 2, action: (a: string, b: number, symbols: SymbolMap, constSymbols: SymbolMap) => {
-          if (constSymbols.has(a)) return { error: true, msg: `Cannot assign to constant value '${a}'` };
-          symbols.set(a, b);
+        type: TOKEN_OP, value: '=', args: 2, action: (a: string, b: number, E: Expression) => {
+          E.setSymbol(a, b);
           return b;
         }, assoc: 'rtl', prec: 3, pos: i, posend: i
       } as IOperator;
@@ -319,7 +318,6 @@ function evaluateExpression(tokens: Tokens, E: Expression): ReturnValue {
           if (j === 0 && OP.value === '=') args.push(T.value); // Push the symbol itself
           else if (T.value === E.numberOpts.imag) args.push(Complex.I); // Imaginary unit
           else if (E.hasSymbol(T.value)) args.push(E.getSymbol(T.value));
-          else if (E.constSymbols.has(T.value)) args.push(E.constSymbols.get(T.value));
           else return void (E.error = { error: true, token: T, msg: `Unbound symbol '${T.value}' referenced in operator '${OP.value}'` } as IEvaluationError);
         } else {
           return void (E.error = { error: true, token: T, msg: `Invalid token type in operator '${OP.value}'` } as IEvaluationError);
@@ -328,6 +326,7 @@ function evaluateExpression(tokens: Tokens, E: Expression): ReturnValue {
       if (E.numberOpts.imag) args = args.map(z => typeof z === 'number' ? new Complex(z) : z); // Ensure all data values are Complex
       let val: ReturnValue;
       if (OP.action) {
+        if (OP.value === '=' && E.constSymbols.has(args[0])) return void (E.error = { error: true, token: argTokens[0], msg: `Cannot assign to constant symbol '${args[0]}'` });
         val = OP.action(...args, E);
       } else if (OP.value === '()') {
         // CALL
@@ -344,11 +343,12 @@ function evaluateExpression(tokens: Tokens, E: Expression): ReturnValue {
           try {
             x = f(...argValues, E);
           } catch (e) {
-            E.error = { error: true, msg: e instanceof Error ? e.message : e.toString(), token: OP };
+            E.error = { error: true, msg: e instanceof Error ? e.message : (e as any).toString(), token: OP };
             return;
           }
         } else if (typeof f === 'object' && f.type === 'fn') {
           const fn = f as IFunction;
+          if (!fn.tokens) E.parseSymbol(argTokens[0].value); // Parse on the fly
           if (argValues.length > fn.args.length) {
             E.pop();
             return void (E.error = { error: true, token: OP, msg: `Function ${argTokens[0].value} expected ${fn.args.length} arguments, got ${argValues.length}` });
@@ -383,7 +383,6 @@ function evaluateExpression(tokens: Tokens, E: Expression): ReturnValue {
   else if (stack[0].type === TOKEN_SYM) {
     if (stack[0].value === E.numberOpts.imag) value = Complex.I as any;
     else if (E.hasSymbol(stack[0].value)) value = E.getSymbol(stack[0].value);
-    else if (E.constSymbols.has(stack[0].value)) value = E.constSymbols.get(stack[0].value);
     else return void (E.error = { error: true, token: stack[0], msg: `Unbound symbol referenced '${stack[0].value}'` } as IEvaluationError);
   } else {
     return void (E.error = { error: true, token: stack[0], msg: `Unterminal token in result stack` } as IEvaluationError);
@@ -422,6 +421,9 @@ type ExprError = IParseError | IEvaluationError | undefined; // Error types
  * Creates an expression, which may be parsed and executed.
  * 
  * Expression.numberOpts allows customision on numerical parsing.
+ * 
+ * Values may be numbers, Complex instanced, Functions, or objects (IFunction) which behave as a function.
+ * When changes are made to IFunction.source, call Expression.parseSymbol(<name>) to update it, otherwise the change WILL NOT take effect.
 */
 export class Expression {
   public source: string;
@@ -462,6 +464,7 @@ export class Expression {
 
   /** Define given symbol in topmost scope */
   public defSymbol(name: string, value: SymbolValue = 0) {
+    if (this.constSymbols.has(name)) throw new Error(`Cannot re-use constant symbol '${name}'`);
     this.callstack[this.callstack.length - 1].symbols.set(name, value);
     return this;
   }
@@ -469,6 +472,7 @@ export class Expression {
   /** Set value of existing symbol to a value. If symbol does not exist, create it in the topmost scope. */
   public setSymbol(name: string, value: SymbolValue) {
     if (this.callstack.length === 0) return this;
+    if (this.constSymbols.has(name)) throw new Error(`Cannot assign to constant '${name}'`);
     for (let i = this.callstack.length - 1; i >= 0; --i) {
       if (this.callstack[i].symbols.has(name)) {
         this.callstack[i].symbols.set(name, value);
@@ -481,11 +485,12 @@ export class Expression {
 
   /** Does the given symbol exist? */
   public hasSymbol(name: string) {
-    return this.callstack.some(({ symbols }) => symbols.has(name));
+    return this.constSymbols.has(name) || this.callstack.some(({ symbols }) => symbols.has(name));
   }
 
   /** Get value of given symbol, or undefined */
   public getSymbol(name: string) {
+    if (this.constSymbols.has(name)) return this.constSymbols.get(name);
     for (let i = this.callstack.length - 1; i >= 0; --i) {
       if (this.callstack[i].symbols.has(name)) {
         return this.callstack[i].symbols.get(name);
@@ -496,6 +501,10 @@ export class Expression {
 
   /** Delete first occurence of a given symbol */
   public delSymbol(name: string) {
+    if (this.constSymbols.has(name)) {
+      this.constSymbols.delete(name);
+      return this;
+    }
     for (let i = this.callstack.length - 1; i >= 0; --i) {
       if (this.callstack[i].symbols.has(name)) {
         this.callstack[i].symbols.delete(name);
@@ -561,27 +570,36 @@ export class Expression {
     return this;
   }
 
+  /** Parse a symbol (i.e. a user-defined function) */
+  public parseSymbol(name: string) {
+    if (this.hasSymbol(name)) {
+      const value = this.getSymbol(name);
+      if (typeof value === "object" && (value as any).type === "fn") {
+        const fn = value as IFunction;
+        let o = parseExpression(fn.body, this);
+        if (o.error) {
+          this.error = o;
+        } else {
+          fn.tokens = tokensToRPN(o.tokens);
+        }
+      }
+    }
+    return this;
+  }
+
+  /** call this.parseSymbol on every elligible symbol */
+  public parseAllSymbols() {
+    this.constSymbols.forEach((_, name) => this.parseSymbol(name));
+    for (let i = this.callstack.length - 1; i >= 0; --i) {
+      this.callstack[i].symbols.forEach((_, name) => this.parseSymbol(name));
+    }
+  }
+
   /** Parse raw to token array */
   public parse() {
     this.error = undefined;
     this.callstack.length = 1;
     this._tokens.length = 0;
-
-    // PARSE FUNCTIONS FIRST
-    for (let i = 0; i < this.callstack.length; i++) {
-      for (let [key, value] of this.callstack[i].symbols) {
-        if (typeof value === "object" && (value as any).type === "fn" && !(value as IFunction).tokens) {
-          const fn = value as IFunction;
-          let o = parseExpression(fn.body, this);
-          if (o.error) {
-            this.error = o;
-            return this;
-          } else {
-            fn.tokens = tokensToRPN(o.tokens);
-          }
-        }
-      }
-    }
 
     const o = parseExpression(this.source, this);
     if (o.error) {
@@ -600,11 +618,4 @@ export class Expression {
     if (this.error) return;
     return evaluateExpression(this._tokens, this);
   }
-
-  // /** Return new Expression, copying symbolMap */
-  // public copy(expr = undefined) {
-  //   let E = new Expression(expr);
-  //   this._symbols.forEach((v, k) => E._symbols.set(k, v));
-  //   return E;
-  // }
 } 

@@ -62,6 +62,11 @@ These a general useful programs.
 
 **Dependencies**: *None*
 
+# `image-to-ascii.ts`
+**About**: A function which transforms an input image to a block of ASCII characters
+
+**Dependencies**: *None*
+
 # `ImageConvert.ts`
 **About**: A class for loading and converting between image formats *N.B. to BMP is not working*
 

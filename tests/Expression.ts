@@ -1,4 +1,3 @@
-import { errorToString, Expression } from "../libs/Expression";
 import { createExpression } from "../libs/expression-create";
 
 function main() {
@@ -14,8 +13,7 @@ function main() {
     body: 'x + 1',
   });
 
-  let val = E.load("f(5)").parse().evaluate();
-  console.log(E.source);
+  let val = E.load("g(5)").parse().evaluate();
   if (E.error) {
     console.log(E.handleError());
   } else {
