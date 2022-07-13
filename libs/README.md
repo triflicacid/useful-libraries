@@ -106,6 +106,11 @@ For this, focus must be on the div. Arrows will change move the edit cursor. Pre
 
 **Dependencies**: *None*
 
+# `shapes.ts`
+**About**: Plethora of functions to create and draw 2D and 3D shapes
+
+**Dependencies**: `maths/Matrix.js`
+
 # `SocketManager.ts`
 **About**: Class which manages a socket connection
 

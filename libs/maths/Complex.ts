@@ -398,16 +398,19 @@ export class Complex {
 
   /** Return ceiling of a number */
   public static ceil(z_: any) {
+    if (z_ instanceof Complex) z_ = z_.copy();
     return _zapply(z_, Math.ceil);
   }
 
   /** Return floor of a number */
   public static floor(z_: any) {
+    if (z_ instanceof Complex) z_ = z_.copy();
     return _zapply(z_, Math.floor);
   }
 
   /** Return rounded value of z to specified decimal places, or to whole integer */
   public static round(z_: any, dp_?: number) {
+    if (z_ instanceof Complex) z_ = z_.copy();
     if (dp_ === undefined) return _zapply(z_, Math.round);
     const z = Complex.parse(z_);
     const K = Math.pow(10, dp_);

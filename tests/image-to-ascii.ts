@@ -3,6 +3,7 @@ import { imageToAscii } from "../libs/image-to-ascii";
 let charsets = [
   `Ñ@#W$9876543210?!abc;:+=-,._ `,
   `█▓▒░|;:,. `,
+  // `█▓▒░:. `,
   "@QB#NgWM8RDHdOKq9$6khEPXwmeZaoS2yjufF]}{tx1zv7lciL/\\|?*>r^;:_\"~,'.-`",
   "¶@ØÆMåBNÊßÔR#8Q&mÃ0À$GXZA5ñk2S%±3Fz¢yÝCJf1t7ªLc¿+?(r/¤²!*;\" ^:,'.`",
   "ᛥᛤᛞᚥᚸᛰᛖᚻᚣᛄᚤᛒᚢᚱᛱᚷᚫᛪᚧᚬᚠᛏᚨᚰᚩᚮᚪᚳᚽᚿᛊᛁᛵᛍ᛬ᚲᛌ᛫",
@@ -12,7 +13,7 @@ let charsets = [
   "ぽぼゑぜぬあおゆぎゐはせぢがきぱびほげばゟぁたかぞぷれひずどらさでけぉちごえすゎにづぇとょついこぐうぅぃくっしへゞゝ゚゙",
 ];
 let chars = charsets[1];
-let w = 128, h = 64;
+let w = 128, h = 64, fontSize = 7;
 let playing = false;
 
 /** Start livestream from <video/>. Every animation loop, convert image capture to ASCII and output to <div/> */
@@ -28,7 +29,7 @@ async function startCam(video: HTMLVideoElement, div: HTMLDivElement) {
     pre.style.backgroundColor = "#000";
     pre.style.color = "#FFF";
     pre.style.fontFamily = "Consolas";
-    pre.style.fontSize = "50%";
+    pre.style.fontSize = fontSize + "px";
 
     requestAnimationFrame(function loop() {
       if (playing) {
@@ -106,4 +107,14 @@ window.addEventListener("load", async function main() {
   inputHeight.value = h.toString();
   inputHeight.addEventListener("change", () => (h = +inputHeight.value));
   document.body.appendChild(inputHeight);
+  document.body.insertAdjacentHTML("beforeend", "<br>");
+  document.body.insertAdjacentHTML("beforeend", "Dimensions (px): ");
+  document.body.insertAdjacentHTML("beforeend", "<br>");
+  document.body.insertAdjacentHTML("beforeend", "Font Size: ");
+  const fontSizeInput = document.createElement("input");
+  fontSizeInput.type = "number";
+  fontSizeInput.value = fontSize.toString();
+  fontSizeInput.addEventListener("change", () => (fontSize = +fontSizeInput.value));
+  document.body.appendChild(fontSizeInput);
+  document.body.insertAdjacentHTML("beforeend", " px");
 });

@@ -1,15 +1,17 @@
+import { Complex } from "./Complex";
+
 /**
  * Represents a matrix (this.matrix is a 2-D array)
  * Each element is an instance of Complex
  */
 export class Matrix {
-  public matrix: number[][];
+  public matrix: Complex[][];
 
   /**
    * To create a matrix, use Matrix['from'...] methods
    * Sets value given durectly to <#Matrix>.matrix
    */
-  constructor(m?: number[][]) {
+  constructor(m?: Complex[][]) {
     this.matrix = m ?? [];
     if (!Matrix.isLegal(this.matrix)) throw new Error(`new Matrix() :: Invalid matrix ${this.matrix}`);
   }
@@ -23,8 +25,8 @@ export class Matrix {
   }
 
   /** Set (row, col) to <arg> */
-  public set(r: number, c: number, n: number) {
-    this.matrix[r][c] = n
+  public set(r: number, c: number, n: any) {
+    this.matrix[r][c] = Complex.parse(n);
     return this;
   }
 
@@ -41,32 +43,36 @@ export class Matrix {
 
   /** Return copy of matrix */
   public copy() {
-    return new Matrix(this.matrix.map(row => ([...row])));
+    return new Matrix(this.matrix.map(row => row.map(n => n.copy())));
   }
 
   /** Apply a function to each item in the matrix */
-  public apply(fn: (n: number, row: number, col: number) => number) {
-    return new Matrix(this.matrix.map((_, r) => this.matrix[r].map((_, c) => +(fn(this.matrix[r][c], r, c)))));
+  public apply(fn: (n: Complex, row: number, col: number) => Complex) {
+    return new Matrix(this.matrix.map((_, r) => this.matrix[r].map((_, c) => Complex.parse(fn(this.matrix[r][c], r, c)))));
   }
 
   /** Scalar adition: returns new Matrix */
-  public scalarAdd(n: number) {
-    return this.apply(x => x + n);
+  public scalarAdd(n: any) {
+    n = Complex.parse(n);
+    return this.apply(z => Complex.add(z, n));
   }
 
   /** Scalar subtraction: returns new Matrix */
-  public scalarSub(n: number) {
-    return this.apply(x => x - n);
+  public scalarSub(n: any) {
+    n = Complex.parse(n);
+    return this.apply(z => Complex.sub(z, n));
   }
 
   /** Scalar multiplication: returns new Matrix */
-  public scalarMult(n: number) {
-    return this.apply(x => x * n);
+  public scalarMult(n: any) {
+    n = Complex.parse(n);
+    return this.apply(z => Complex.mult(z, n));
   }
 
   /** Scalar division: returns new Matrix */
-  public scalarDiv(n: number) {
-    return this.apply(x => x / n);
+  public scalarDiv(n: any) {
+    n = Complex.parse(n);
+    return this.apply(z => Complex.div(z, n));
   }
 
   /** raise to integer power */
@@ -142,7 +148,7 @@ export class Matrix {
     for (let r = 0; r < this.rows; r++, neg = !neg) {
       for (let c = 0, nneg = neg; c < this.cols; c++, nneg = !nneg) {
         if (nneg) {
-          mat.set(r, c, -mat.get(r, c));
+          mat.set(r, c, Complex.mult(mat.get(r, c), -1));
         }
       }
     }
@@ -157,7 +163,7 @@ export class Matrix {
   /** calculare inverse matrix */
   public inverse() {
     let inter = this.getMinors().checkerboard().transpose();
-    return inter.scalarMult(1 / inter.determinant());
+    return inter.scalarMult(Complex.div(1, inter.determinant()));
   }
 
   /** Return string representation as a flat string e.g "0 0 0; 0 0 0;" */
@@ -170,22 +176,36 @@ export class Matrix {
     return '[' + this.matrix.map(a => '[' + a.join(',') + ']').join(',') + ']';
   }
 
-  /** Return values in first column */
-  public toVector(col = 0) {
-    let vec: number[] = [];
-    for (let i = 0; i < this.matrix.length; i++) vec.push(this.matrix[i][col]);
-    return vec;
+  /** Convert contents to pritimitive numbers from Complex (taking real parts) */
+  public toPrimitiveNumbers() {
+    for (let r = 0; r < this.matrix.length; ++r) {
+      for (let c = 0; c < this.matrix[r].length; ++c) {
+        this.matrix[r][c] = this.matrix[r][c].a as any;
+      }
+    }
+    return this;
   }
 
-  public static fromDimensions(rows: number, cols: number, value = 0) {
-    return new Matrix(Array.from({ length: cols }, () => new Array(rows).fill(value)));
+  /** Convert contents from primitive numbers to complex number */
+  public toComplexNumbers() {
+    for (let r = 0; r < this.matrix.length; ++r) {
+      for (let c = 0; c < this.matrix[r].length; ++c) {
+        this.matrix[r][c] = new Complex(this.matrix[r][c] as any);
+      }
+    }
+    return this;
+  }
+
+  public static fromDimensions(rows: number, cols: number, value?: Complex) {
+    if (value === undefined) value = new Complex(0);
+    return new Matrix(Array.from({ length: cols }, () => Array.from({ length: rows }, () => value.copy())));
   }
 
   /** Parse matrix from string: "v v v; v v v;" */
   public static fromString(string: string) {
-    let arr = string.split(';').map(a => a.split(/\s/g).filter(a => a.length > 0).map(n => +n)).filter(a => a.length > 0);
+    let arr = string.split(';').map(a => a.split(/\s/g).filter(a => a.length > 0).map(n => Complex.parse(n))).filter(a => a.length > 0);
     if (arr.length === 0) return new Matrix();
-    let allNotNaN = arr.map(arr => arr.map(x => !isNaN(x)).every(x => x)).every(x => x);
+    let allNotNaN = arr.map(arr => arr.map(x => !Complex.isNaN(x)).every(x => x)).every(x => x);
     if (!allNotNaN) throw new Error(`Matrix string '${string}' :: invalid matrix string (found NaN value)`);
     let sameLength = arr.every(a => a.length === arr[0].length);
     if (!sameLength) throw new Error(`Matrix string '${string}' :: each row must be same length`);
@@ -193,10 +213,10 @@ export class Matrix {
   }
 
   /** Generate matrix from 1D array */
-  public static fromArray(array: number[], rows: number, cols: number) {
+  public static fromArray(array: any[], rows: number, cols: number) {
     let marr = [], tmp = [];
     for (let i = 0, c = 1; i < array.length && marr.length < rows; i++) {
-      tmp.push(+(array[i]));
+      tmp.push(Complex.parse(array[i]));
       if (c === cols) {
         c = 1;
         marr.push(tmp);
@@ -207,15 +227,6 @@ export class Matrix {
     }
     if (tmp.length > 0) marr.push(tmp);
     return new Matrix(marr);
-  }
-
-  /** From Vector e.g. [1, 2, 3] */
-  public static fromVector(...values: number[]) {
-    let mat: number[][] = [];
-    for (let i = 0; i < values.length; i++) {
-      mat[i] = [values[i]];
-    }
-    return new Matrix(mat);
   }
 
   /** Check if an array is a legal matrix? <array> allows caller to control what is defined as an array */
@@ -237,7 +248,7 @@ export class Matrix {
   /** Add two matrices: a + b */
   public static add(a: Matrix, b: Matrix) {
     if (a.rows === b.rows && a.cols === b.cols) {
-      return new Matrix(a.matrix.map((_, r) => a.matrix[r].map((_, c) => (a.matrix[r][c] + b.matrix[r][c]))));
+      return new Matrix(a.matrix.map((_, r) => a.matrix[r].map((_, c) => Complex.add(a.matrix[r][c], b.matrix[r][c]))));
     } else {
       throw E_SAMESIZE;
     }
@@ -246,7 +257,7 @@ export class Matrix {
   /** Subtract two matrices: a - b */
   public static sub(a: Matrix, b: Matrix) {
     if (a.rows === b.rows && a.cols === b.cols) {
-      return new Matrix(a.matrix.map((_, r) => a.matrix[r].map((_, c) => (a.matrix[r][c] - b.matrix[r][c]))));
+      return new Matrix(a.matrix.map((_, r) => a.matrix[r].map((_, c) => Complex.sub(a.matrix[r][c], b.matrix[r][c]))));
     } else {
       throw E_SAMESIZE;
     }
@@ -261,9 +272,8 @@ export class Matrix {
         for (let c2 = 0; c2 < b.cols; c2++) {
           let psum = result.get(r1, c2);
           for (let r2 = 0; r2 < b.rows; r2++) {
-            psum += a.get(r1, r2) * b.get(r2, c2);
+            psum.add(Complex.mult(a.get(r1, r2), b.get(r2, c2)));
           }
-          result.set(r1, c2, psum);
         }
       }
       return result;
@@ -276,9 +286,9 @@ export class Matrix {
   public static determinant(matrix: Matrix) {
     if (matrix.isSquare()) {
       if (matrix.rows === 1) return matrix.get(0, 0);
-      if (matrix.rows === 2) return matrix.get(0, 0) * matrix.get(1, 1) - matrix.get(0, 1) * matrix.get(1, 0);
+      if (matrix.rows === 2) return Complex.mult(matrix.get(0, 0), matrix.get(1, 1)).sub(Complex.mult(matrix.get(0, 1), matrix.get(1, 0)));
 
-      let M = 1, det = 0;
+      let M = 1, det = new Complex(0);
       for (let c = 0; c < matrix.cols; c++) {
         let scalar = matrix.get(0, c), mat = [];
         for (let r1 = 1, ri = 0; r1 < matrix.rows; r1++) {
@@ -289,8 +299,8 @@ export class Matrix {
           }
           ri++;
         }
-        let inter = scalar * Matrix.determinant(new Matrix(mat));
-        if (M) det += inter; else det -= inter;
+        let inter = Complex.mult(scalar, Matrix.determinant(new Matrix(mat)));
+        if (M) det.add(inter); else det.sub(inter);
         M ^= 1;
       }
       return det;
@@ -387,56 +397,13 @@ export class Matrix {
 
   /** Return identity matrix */
   public static identity(size: number) {
-    return new Matrix(Array.from({ length: size }, (_, r) => Array.from({ length: size }, (_, c) => (r === c ? 1 : 0))));
+    return new Matrix(Array.from({ length: size }, (_, r) => Array.from({ length: size }, (_, c) => new Complex(r === c ? 1 : 0))));
   }
 
   /** Return a zero matrix */
   public static zeroes(rows: number, cols?: number) {
     if (cols === undefined) cols = rows;
-    return new Matrix(Array.from({ length: rows }, (_, r) => Array.from({ length: cols }, () => 0)));
-  }
-
-  /** 3D to 2D: create orthographic projection matrix. Perfect top-view, meaning z component (depth) is ignored */
-  public static projectionOrthographic() {
-    return new Matrix([
-      [1, 0, 0],
-      [0, 1, 0],
-    ]);
-  }
-
-  /** Create 2D rotation matrix, to rotate a point `phi` radians ANTICLOCKWISE around the origin */
-  public static rotate2D(phi: number) {
-    return new Matrix([
-      [Math.cos(phi), -Math.sin(phi)],
-      [Math.sin(phi), Math.cos(phi)],
-    ]);
-  }
-
-  /** Create 3D rotation matrix, to rotate a point `phi` radians ANTICLOCKWISE around the Z-axis */
-  public static rotate3DZ(phi: number) {
-    return new Matrix([
-      [Math.cos(phi), -Math.sin(phi), 0],
-      [Math.sin(phi), Math.cos(phi), 0],
-      [0, 0, 1],
-    ]);
-  }
-
-  /** Create 3D rotation matrix, to rotate a point `phi` radians ANTICLOCKWISE around the X-axis */
-  public static rotate3DX(phi: number) {
-    return new Matrix([
-      [1, 0, 0],
-      [0, Math.cos(phi), -Math.sin(phi)],
-      [0, Math.sin(phi), Math.cos(phi)],
-    ]);
-  }
-
-  /** Create 3D rotation matrix, to rotate a point `phi` radians ANTICLOCKWISE around the Y-axis */
-  public static rotate3DY(phi: number) {
-    return new Matrix([
-      [Math.cos(phi), 0, Math.sin(phi)],
-      [0, 1, 0],
-      [-Math.sin(phi), 0, Math.cos(phi)],
-    ]);
+    return new Matrix(Array.from({ length: rows }, (_, r) => Array.from({ length: cols }, (_, c) => new Complex(0))));
   }
 }
 

@@ -99,6 +99,11 @@ This directory contains useful programs for maths-based activities.
 **Dependencies**: *None*
 
 # `Matrix.ts`
+**About**: Represent a matrix
+
+**Dependencies**: *None*
+
+# `Matrix-Complex.ts`
 **About**: Represent a matrix of complex numbers
 
 **Dependencies**: `Complex.ts`
