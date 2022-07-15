@@ -230,7 +230,7 @@ function parseTokenCallOpts(tokens: Tokens, E: Expression): IParseSuccess | IPar
   // Call operator: <symbol>(...)
   for (let i = 0; i < tokens.length - 1;) {
     if (tokens[i].type === TOKEN_SYM && tokens[i + 1].type === TOKEN_OP && tokens[i + 1].value === '(') {
-      let j = i;
+      const j = i;
       i += 2;
       let contents: Tokens = [], open = 1;
       while (tokens[i]) {
@@ -256,7 +256,7 @@ function parseTokenCallOpts(tokens: Tokens, E: Expression): IParseSuccess | IPar
       const getlen = (t: Tokens) => t.reduce((p, c) => p + (c.tlen ?? 1), 0);
       let op = { type: TOKEN_OP, value: '()', args: 1, assoc: 'ltr', prec: 20, action: undefined, data: args, tlen: getlen(contents) + 2, pos: tokens[j].pos, posend: tokens[i].posend } as IOperator;
       tokens.splice(j + 1, op.tlen as number, op);
-      ++i;
+      i = j + 2;
     } else {
       ++i;
     }

@@ -1,3 +1,5 @@
+import { Vector } from "./Vector";
+
 /**
  * Represents a matrix (this.matrix is a 2-D array)
  * Each element is an instance of Complex
@@ -92,7 +94,7 @@ export class Matrix {
 
   /** Transpose this matrix: returns new Matrix */
   public transpose() {
-    const mat = [];
+    const mat: number[][] = [];
     for (let r = 0; r < this.rows; r++) {
       for (let c = 0; c < this.cols; c++) {
         if (!mat[c]) mat[c] = [];
@@ -109,7 +111,7 @@ export class Matrix {
 
   /** Get minor matrix from position */
   public getMinor(row: number, col: number) {
-    const minor = [];
+    const minor: number[][] = [];
     for (let r = 0, ri = 0; r < this.rows; r++) {
       if (r === row) continue;
       minor[ri] = [];
@@ -124,7 +126,7 @@ export class Matrix {
 
   /** Calculate matrix of minors */
   public getMinors() {
-    const minors = [];
+    const minors: number[][] = [];
     for (let r = 0; r < this.rows; r++) {
       minors[r] = [];
       for (let c = 0; c < this.cols; c++) {
@@ -147,6 +149,24 @@ export class Matrix {
       }
     }
     return mat;
+  }
+
+  /** Pad square matrix of size `n` to size `m` by making identity matrix, where `m` > `n` */
+  public pad(newSize: number) {
+    if (this.rows !== this.cols) throw E_SQUARE;
+    const rows = this.rows, d = newSize - rows;
+    const copy = this.copy();
+    // Extend existing columns
+    for (let r = 0; r < rows; r++) {
+      for (let i = 0; i < d; i++) {
+        copy.matrix[r][rows + i] = 0;
+      }
+    }
+    for (let i = 0; i < d; i++) {
+      copy.matrix[rows + i] = Array.from({ length: newSize }, () => 0);
+      copy.matrix[rows + i][rows + i] = 1;
+    }
+    return copy;
   }
 
   /** calculate cofactor matrix */
@@ -194,7 +214,7 @@ export class Matrix {
 
   /** Generate matrix from 1D array */
   public static fromArray(array: number[], rows: number, cols: number) {
-    let marr = [], tmp = [];
+    let marr: number[][] = [], tmp: number[] = [];
     for (let i = 0, c = 1; i < array.length && marr.length < rows; i++) {
       tmp.push(+(array[i]));
       if (c === cols) {
@@ -257,18 +277,39 @@ export class Matrix {
     if (a.cols === b.rows) {
       const result = Matrix.zeroes(a.rows, b.cols);
 
-      for (let r1 = 0; r1 < a.rows; r1++) {
-        for (let c2 = 0; c2 < b.cols; c2++) {
-          let psum = result.get(r1, c2);
-          for (let r2 = 0; r2 < b.rows; r2++) {
-            psum += a.get(r1, r2) * b.get(r2, c2);
+      for (let r = 0; r < a.rows; ++r) {
+        for (let c = 0; c < b.cols; ++c) {
+          let sum = 0;
+          for (let r2 = 0; r2 < b.rows; ++r2) {
+            sum += a.matrix[r][r2] * b.matrix[r2][c];
           }
-          result.set(r1, c2, psum);
+          result.matrix[r][c] = sum;
         }
       }
       return result;
     } else {
       throw new Error(`Matrix: unable to multiply (a.cols != b.rows)`);
+    }
+  }
+
+  /** Multiply with a Vector: MV=V' */
+  public static multVector(m: Matrix, v: Vector) {
+    if (m.rows === 3) { // 3D
+      return new Vector(
+        v.x * m.matrix[0][0] + v.y * m.matrix[1][0] + v.z * m.matrix[2][0],
+        v.x * m.matrix[0][1] + v.y * m.matrix[1][1] + v.z * m.matrix[2][1],
+        v.x * m.matrix[0][2] + v.y * m.matrix[1][2] + v.z * m.matrix[2][2],
+        v.w,
+      );
+    } else if (m.rows === 4) { // 3D + w
+      return new Vector(
+        v.x * m.matrix[0][0] + v.y * m.matrix[1][0] + v.z * m.matrix[2][0] + v.w * m.matrix[3][0],
+        v.x * m.matrix[0][1] + v.y * m.matrix[1][1] + v.z * m.matrix[2][1] + v.w * m.matrix[3][1],
+        v.x * m.matrix[0][2] + v.y * m.matrix[1][2] + v.z * m.matrix[2][2] + v.w * m.matrix[3][2],
+        v.x * m.matrix[0][3] + v.y * m.matrix[1][3] + v.z * m.matrix[2][3] + v.w * m.matrix[3][3],
+      );
+    } else {
+      throw new Error(`Cannot multiply matrix by Vector: matrix must have 3 or 4 rows, got ${m.rows}`);
     }
   }
 
@@ -280,7 +321,7 @@ export class Matrix {
 
       let M = 1, det = 0;
       for (let c = 0; c < matrix.cols; c++) {
-        let scalar = matrix.get(0, c), mat = [];
+        let scalar = matrix.get(0, c), mat: number[][] = [];
         for (let r1 = 1, ri = 0; r1 < matrix.rows; r1++) {
           mat[ri] = [];
           for (let c1 = 0; c1 < matrix.cols; c1++) {
@@ -299,9 +340,7 @@ export class Matrix {
     }
   }
 
-  /** Return matrix in row echelon form.
-   * ! This expects a matrix in raw numerical form Matrix.toPrimitive()
-  */
+  /** Return matrix in row echelon form */
   public static toRowEchelonForm(matrix: Matrix) {
     let nr = matrix.rows, nc = matrix.cols;
 
@@ -329,7 +368,7 @@ export class Matrix {
       while (repeat) {
         repeat = false;
         let r = 1;
-        while (matrix.get(p, p) as any === 0) {
+        while (matrix.get(p, p) === 0) {
           if (p + r <= nr) {
             p++;
             repeat = true;
@@ -341,9 +380,9 @@ export class Matrix {
 
         for (let r = 1; r < nr - p; ++r) {
           if (matrix.get(p + r, p) as any !== 0) {
-            let x = -matrix.get(p + r, p) / (matrix.get(p, p) as any);
+            let x = -matrix.get(p + r, p) / matrix.get(p, p);
             for (let c = p; c <= nc; ++c) {
-              matrix.set(p + r, c, (matrix.get(p, c) as any) * x + (matrix.get(p + r, c) as any));
+              matrix.set(p + r, c, matrix.get(p, c) * x + matrix.get(p + r, c));
             }
           }
         }
@@ -391,16 +430,57 @@ export class Matrix {
   }
 
   /** Return a zero matrix */
-  public static zeroes(rows: number, cols?: number) {
-    if (cols === undefined) cols = rows;
+  public static zeroes(rows: number, cols = -1) {
+    if (cols === -1) cols = rows;
     return new Matrix(Array.from({ length: rows }, (_, r) => Array.from({ length: cols }, () => 0)));
   }
 
-  /** 3D to 2D: create orthographic projection matrix. Perfect top-view, meaning z component (depth) is ignored */
+  /** 3D to 2D: create orthographic projection matrix (3x2). Perfect top-view, meaning z component (depth) is ignored */
   public static projectionOrthographic() {
     return new Matrix([
       [1, 0, 0],
       [0, 1, 0],
+    ]);
+  }
+
+  /**
+   * Create projection matrix (4x4)
+   * @param zNear Closest Z co-ordinate
+   * @param zFar Fathest Z co-ordinate
+   * @param fov Field of view (radians)
+   * @param aspectR Aspect ratio (commonly height/width)
+   */
+  public static projectionDetail(zNear: number, zFar: number, fov: number, aspectR: number) {
+    let t = 1 / Math.tan(fov * 0.5);
+    return new Matrix([
+      [aspectR * t, 0, 0, 0],
+      [0, t, 0, 0],
+      [0, 0, zFar / (zFar - zNear), 1],
+      [0, 0, (-zFar * zNear) / (zFar - zNear), 1]
+    ]);
+  }
+
+  /**
+   * **CHEAT INVERSE: ONLY VALID FOR 4x4 MATRICES IN FORM `[ a 0 0 0; 0 b 0 0; 0 0 c 1 ; 0 0 d 1 ]`**
+   * 
+   * Return the inverse of a specifi 4x4 matric (e.g. as produced from projectionDetail)
+   */
+  public static inverseSpecial(m: Matrix) {
+    const a = m.matrix[0][0], b = m.matrix[1][1], c = m.matrix[2][2], d = m.matrix[3][2];
+    return new Matrix([
+      [1 / a, 0, 0, 0],
+      [0, 1 / b, 0, 0],
+      [0, 0, -1 / (d - c), 1 / (d - c)],
+      [0, 0, d / (d - c), -c / (d - c)],
+    ]);
+  }
+
+  /** Create 2D translation matrix */
+  public static translate2D(x: number, y: number) {
+    return new Matrix([
+      [1, 0, 0],
+      [0, 1, 0],
+      [x, y, 1],
     ]);
   }
 
@@ -409,6 +489,16 @@ export class Matrix {
     return new Matrix([
       [Math.cos(phi), -Math.sin(phi)],
       [Math.sin(phi), Math.cos(phi)],
+    ]);
+  }
+
+  /** Create 3D translation matrix */
+  public static translate3D(x: number, y: number, z: number) {
+    return new Matrix([
+      [1, 0, 0, 0],
+      [0, 1, 0, 0],
+      [0, 0, 1, 0],
+      [x, y, z, 1],
     ]);
   }
 
@@ -437,6 +527,56 @@ export class Matrix {
       [0, 1, 0],
       [-Math.sin(phi), 0, Math.cos(phi)],
     ]);
+  }
+
+  /**
+   * Return matrix which will translate a given point `pos` onto `target`
+   * @param pos Current position
+   * @param target Target (new) position
+   * @param up Vector pointing perpendicularly upwards from `pos`
+  */
+  public static translateToPointAt(pos: Vector, target: Vector, up: Vector) {
+    let forward = Vector.sub(target, pos); // Vector pointing from pos to target
+    forward = Vector.normalise3D(forward);
+    // Factor in `y` elevation from `up`
+    const diff = Vector.mul(forward, Vector.dot(up, forward));
+    up = Vector.sub(up, diff);
+    up = Vector.normalise3D(up);
+
+    const right = Vector.cross(up, forward); // Right direction is perpendicular to forward and up (use hand rule)
+
+    return new Matrix([
+      [right.x, right.y, right.z, 0],
+      [up.x, up.y, up.z, 0],
+      [forward.x, forward.y, forward.z, 0],
+      [pos.x, pos.y, pos.z, 1],
+    ]);
+  }
+
+  /**
+   * **CHEAT INVERSE: ONLY VALID FOR ROTATION/TRANSLATION 4x4 MATRICES**
+   * 
+   * Return the matrix inverser of a 4x4 rotation/translation matrix
+   */
+  public static inverseRotTrans(m: Matrix) {
+    let M = Matrix.zeroes(4);
+    M.matrix[0][0] = m.matrix[0][0];
+    M.matrix[0][1] = m.matrix[1][0];
+    M.matrix[0][2] = m.matrix[2][0];
+    M.matrix[0][3] = 0;
+    M.matrix[1][0] = m.matrix[0][1];
+    M.matrix[1][1] = m.matrix[1][1]
+    M.matrix[1][2] = m.matrix[2][1];
+    M.matrix[1][3] = 0;
+    M.matrix[2][0] = m.matrix[0][2];
+    M.matrix[2][1] = m.matrix[1][2];
+    M.matrix[2][2] = m.matrix[2][2];
+    M.matrix[2][3] = 0;
+    M.matrix[3][0] = -(m.matrix[3][0] * M.matrix[0][0] + m.matrix[3][1] * M.matrix[1][0] + m.matrix[3][2] * M.matrix[2][0]);
+    M.matrix[3][1] = -(m.matrix[3][0] * M.matrix[0][1] + m.matrix[3][1] * M.matrix[1][1] + m.matrix[3][2] * M.matrix[2][1]);
+    M.matrix[3][2] = -(m.matrix[3][0] * M.matrix[0][2] + m.matrix[3][1] * M.matrix[1][2] + m.matrix[3][2] * M.matrix[2][2]);
+    M.matrix[3][3] = 1;
+    return M;
   }
 }
 
