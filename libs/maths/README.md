@@ -73,6 +73,11 @@ This directory contains useful programs for maths-based activities.
 
 **Dependencies**: *None*
 
+# `general.ts`
+**About**: Collection of un-classified maths functions
+
+**Dependencies**: `polynomial.ts`
+
 # `lambertw.ts`
 **About**: Return function such that `W(x*e**x) = x`
 
