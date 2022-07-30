@@ -4,7 +4,7 @@ import * as constants from "./maths/constants";
 
 /** Return new Expression */
 export function createExpression(expr?: string) {
-  const E = new Expression();
+  const E = new Expression(expr);
   gen_vars(E);
   real_funcs(E);
   return E;
@@ -12,7 +12,7 @@ export function createExpression(expr?: string) {
 
 /** Return new Expression for complex numbers */
 export function createComplexExpression(expr?: string) {
-  const E = new Expression();
+  const E = new Expression(expr);
   E.numberOpts.imag = 'i';
   E.operators = OPERATORS_IMAG;
   gen_vars(E);

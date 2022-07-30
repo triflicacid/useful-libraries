@@ -1,9 +1,16 @@
-import { beta } from "./libs/maths/general";
+import { createComplexExpression, createExpression } from "./libs/expression-create";
+import { createComplexFieldLine, Graph } from "./libs/Graph";
 
 function main() {
-  let n = 5;
-  let a = Array.from({ length: n + 3 }, (_, k) => beta(n, k));
-  console.log(a);
+  const canvas = document.createElement("canvas");
+  canvas.width = 900;
+  canvas.height = 600;
+  document.body.appendChild(canvas);
+
+  const graph = new Graph();
+  window.graph = graph;
+  graph.addLine(createComplexFieldLine(createComplexExpression("z ** 2").parse()));
+  graph.sketch(canvas);
 }
 
 window.addEventListener("load", main);

@@ -60,7 +60,11 @@ These a general useful programs.
 # `Font.ts`
 **About**: A class for representing fonts.
 
-**Dependencies**: *None*
+
+# `Graph.ts`
+**About**: A Graph class, supporing a wide variety of line sketching types
+
+**Dependencies**: `Expression.ts`, `maths/Complex.ts`
 
 # `image-to-ascii.ts`
 **About**: A function which transforms an input image to a block of ASCII characters
