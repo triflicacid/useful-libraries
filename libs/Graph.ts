@@ -163,16 +163,20 @@ export interface ILineComplexField extends ILine {
     expr: Expression;
     /** [in_complex, out_complex] */
     coords: Complex[][];
+    /** Highlight magnitude difference */
+    highlightMag: boolean;
 }
 
 /**
  * Return complex line: vary complex inout, plot complex output
  * @param expr Expression Complex -> Complex (must be serup to handle complex maths)
+ * @param highlightMag highlight magnitude difference by brightness
  */
-export function createComplexFieldLine(expr: Expression) {
+export function createComplexFieldLine(expr: Expression, highlightMag = false) {
     return {
         type: LineType.ComplexField,
         expr,
+        highlightMag
     } as ILineComplexField;
 }
 
@@ -956,7 +960,7 @@ export class Graph {
                     line.emsg = `Can only draw one 'field' line type`;
                 } else {
                     this.generate(canvas.width, canvas.height, id);
-                    this._plotComplexField(ctx, canvas.width, canvas.height, line.coords);
+                    this._plotComplexField(ctx, canvas.width, canvas.height, line.coords, line.highlightMag);
                     met = true;
                 }
             }
@@ -1192,21 +1196,47 @@ export class Graph {
     }
 
     /** Plot complex field using domain coloring */
-    private _plotComplexField(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, width: number, height: number, points: Complex[][]) {
+    private _plotComplexField(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, width: number, height: number, points: Complex[][], highlightMag = false) {
         const img = ctx.getImageData(0, 0, width, height);
-        for (let x = 0; x < width; x++) {
-            for (let y = 0; y < height; y++) {
-                let idx = x + y * width, pidx = 4 * idx;
-                // let [zIn, zOut] = outs[x + y * this.width];
-                // let [mag, arg] = outsN[x + y * this.width];
-                const arg = points[idx][1].getArg();
-                const hu = arg < 0 ? 360 + arg / Math.PI * 180 : arg / Math.PI * 180;
-                // let bright = data.C ? mag / maxMag * 75 : 50;
-                const rgb = hsl2rgb(hu, 100, 50);
-                img.data[pidx] = rgb[0];
-                img.data[pidx + 1] = rgb[1];
-                img.data[pidx + 2] = rgb[2];
-                img.data[pidx + 3] = 255;
+        if (highlightMag) {
+            let mags: number[] = [], maxMag = -Infinity, minMag = Infinity;
+            for (let x = 0; x < width; x++) {
+                for (let y = 0; y < height; y++) {
+                    let idx = x + y * width;
+                    let mag = Math.log10(points[idx][1].getMag());
+                    mags[idx] = mag;
+                    if (isFinite(mag)) {
+                        if (mag > maxMag) maxMag = mag;
+                        if (mag < minMag) minMag = mag;
+                    }
+                }
+            }
+            let magDelta = maxMag - minMag;
+            for (let x = 0; x < width; x++) {
+                for (let y = 0; y < height; y++) {
+                    let idx = x + y * width, pidx = 4 * idx;
+                    let mag = mags[idx], arg = points[idx][1].getArg();
+                    const hu = arg < 0 ? 360 + arg / Math.PI * 180 : arg / Math.PI * 180;
+                    const bright = (mag - minMag) / magDelta * 70 + 10;
+                    const rgb = hsl2rgb(hu, 100, bright);
+                    img.data[pidx] = rgb[0];
+                    img.data[pidx + 1] = rgb[1];
+                    img.data[pidx + 2] = rgb[2];
+                    img.data[pidx + 3] = 255;
+                }
+            }
+        } else {
+            for (let x = 0; x < width; x++) {
+                for (let y = 0; y < height; y++) {
+                    let idx = x + y * width, pidx = 4 * idx;
+                    const arg = points[idx][1].getArg();
+                    const hu = arg < 0 ? 360 + arg / Math.PI * 180 : arg / Math.PI * 180;
+                    const rgb = hsl2rgb(hu, 100, 50);
+                    img.data[pidx] = rgb[0];
+                    img.data[pidx + 1] = rgb[1];
+                    img.data[pidx + 2] = rgb[2];
+                    img.data[pidx + 3] = 255;
+                }
             }
         }
         ctx.putImageData(img, 0, 0);

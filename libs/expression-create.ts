@@ -48,7 +48,7 @@ function real_funcs(E: Expression) {
   E.constSymbols.set("sqrt", Math.sqrt);
   E.constSymbols.set("cbrt", Math.cbrt);
   E.constSymbols.set("exp", Math.exp);
-  E.constSymbols.set("ln", Math.log);
+  E.constSymbols.set("log", Math.log);
 }
 
 /** Load complex functions */
@@ -73,5 +73,5 @@ function cplx_funcs(E: Expression) {
   E.constSymbols.set("sqrt", Complex.sqrt);
   E.constSymbols.set("cbrt", Complex.cbrt);
   E.constSymbols.set("exp", Complex.exp);
-  E.constSymbols.set("ln", Complex.log);
+  E.constSymbols.set("log", Complex.log);
 }

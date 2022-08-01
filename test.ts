@@ -9,7 +9,7 @@ function main() {
 
   const graph = new Graph();
   window.graph = graph;
-  graph.addLine(createComplexFieldLine(createComplexExpression("z ** 2").parse()));
+  graph.addLine(createComplexFieldLine(createComplexExpression("tanh(z)").parse(), true));
   graph.sketch(canvas);
 }
 
