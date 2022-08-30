@@ -5,11 +5,11 @@ type ColorMode = "RGB" | "HSL" | "LCH" | "LAB";
 type ColorArg = string | number[];
 type Point = [number, number];
 
-function parseColor(mode: ColorMode, arg: ColorArg = '#000'): string {
+function parseColor(mode: ColorMode, arg: ColorArg = '#000'): string | null {
   if (arg === null) return null;
   if (typeof arg === 'string') return arg; // May be CSS colour, hex string etc...
   if (typeof arg.slice === 'function') {
-    let cstr: string;
+    let cstr = "";
     switch (mode) {
       case "RGB": {
         if (arg.length === 1) cstr = `rgb(${arg[0]},${arg[0]},${arg[0]})`;
@@ -38,7 +38,7 @@ function parseColor(mode: ColorMode, arg: ColorArg = '#000'): string {
       default:
         throw new Error(`Unknown color mode '${mode}'`);
     }
-    if (cstr !== undefined) return cstr;
+    if (cstr !== "") return cstr;
   }
   throw new Error(`Invalid arguments - could not convert to valid color (color mode = '${mode}')`);
 }
@@ -60,7 +60,7 @@ export class RCanv {
 
   constructor(canvas: HTMLCanvasElement) {
     this._canv = canvas;
-    this._ctx = canvas.getContext("2d");
+    this._ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
     this._font = new Font();
   }
 
@@ -135,7 +135,8 @@ export class RCanv {
 
   /** Set background colour of canvas */
   public background(color?: ColorArg) {
-    this._ctx.fillStyle = this.color(color);
+    const col = this.color(color);
+    if (col) this._ctx.fillStyle = col;
     this._ctx.fillRect(0, 0, this.width, this.height);
   }
 

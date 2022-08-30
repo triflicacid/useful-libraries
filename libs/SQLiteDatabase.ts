@@ -21,7 +21,7 @@ export class SQLiteDatabase {
         this._db = await open(this._path);
         this._isOpen = true;
       } catch (e) {
-        return this._error(e);
+        return this._error(e as Error);
       }
     }
   }
@@ -30,9 +30,9 @@ export class SQLiteDatabase {
   public async run(query: string): Promise<void> {
     if (this._isOpen) {
       try {
-        await run(<sqlite3.Database>this._db, query);
+        await run(this._db as sqlite3.Database, query);
       } catch (e) {
-        return this._error(e);
+        return this._error(e as Error);
       }
     } else {
       return this._error(new SQLiteDatabaseError('running (class)', 'Database is not open'));
@@ -43,9 +43,9 @@ export class SQLiteDatabase {
   public async all<T>(query: string, params: any[] = []): Promise<T[]> {
     if (this._isOpen) {
       try {
-        return await all(<sqlite3.Database>this._db, query, params);
+        return await all(this._db as sqlite3.Database, query, params);
       } catch (e) {
-        return this._error(e);
+        return this._error(e as Error);
       }
     } else {
       return this._error(new SQLiteDatabaseError('read:all (class)', 'Database is not open'));
@@ -56,9 +56,9 @@ export class SQLiteDatabase {
   public async get<T>(query: string, params: any[] = []): Promise<T> {
     if (this._isOpen) {
       try {
-        return await get(<sqlite3.Database>this._db, query, params);
+        return await get(this._db as sqlite3.Database, query, params);
       } catch (e) {
-        return this._error(e);
+        return this._error(e as Error);
       }
     } else {
       return this._error(new SQLiteDatabaseError('read:get (class)', 'Database is not open'));
@@ -69,9 +69,9 @@ export class SQLiteDatabase {
   public async each<T>(query: string, callback: (row: T, n: number) => void, params: any[] = []): Promise<number> {
     if (this._isOpen) {
       try {
-        return await each(<sqlite3.Database>this._db, query, params, callback);
+        return await each(this._db as sqlite3.Database, query, params, callback);
       } catch (e) {
-        return this._error(e);
+        return this._error(e as Error);
       }
     } else {
       return this._error(new SQLiteDatabaseError('read:each (class)', 'Database is not open'));
@@ -81,7 +81,7 @@ export class SQLiteDatabase {
   /** Close database connection */
   public async close(): Promise<void> {
     if (this._isOpen) {
-      await close(<sqlite3.Database>this._db);
+      await close(this._db as sqlite3.Database);
       this._db = undefined;
       this._isOpen = false;
     } else {

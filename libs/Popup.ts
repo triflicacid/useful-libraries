@@ -8,8 +8,8 @@ export default class Popup {
   public static getTopmostPopup() { return Popup._openPopups.length == 0 ? undefined : Popup._openPopups[Popup._openPopups.length - 1]; }
 
   private _title: string;
-  private _htmlContent: HTMLElement;
-  private _onCloseCallback: PopupCloseHandler;
+  private _htmlContent: HTMLElement | undefined;
+  private _onCloseCallback: PopupCloseHandler | undefined;
   private _popupDiv: HTMLDivElement | null = null;
   private _popupBg: HTMLDivElement | null = null; // Background element which blocks interactions to page
 
@@ -101,20 +101,20 @@ export default class Popup {
       document.body.insertAdjacentElement('beforeend', container);
 
       Popup._openPopups.push(this);
-      return this;
     }
+    return this;
   }
 
   /** Hide this popup (if open) */
   public hide() {
     if (this.isOpen()) {
-      this._popupDiv.remove();
+      (this._popupDiv as HTMLDivElement).remove();
       this._popupDiv = null;
 
       let i = Popup._openPopups.indexOf(this);
       Popup._openPopups.splice(i, 1);
 
-      this._popupBg.remove();
+      (this._popupBg as HTMLDivElement).remove();
       this._popupBg = null;
     }
     return this;

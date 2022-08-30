@@ -5,7 +5,7 @@ import { Complex } from "./Complex";
  *
  * Abramowitz & Stegun, page 299, eq (7.1.26)
  */
-export function erf(x: number) {
+export function erf(x: number): number {
     if (x < 0) return -erf(-x); // Odd function
     const a = [0.254829592, -0.284496736, 1.421413741, -1.453152027, 1.061405429], p = 0.3275911;
     const t = 1 / (1 + p * x);

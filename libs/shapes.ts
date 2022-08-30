@@ -591,7 +591,7 @@ function line(ctx: CanvasRenderingContext2D, i: number, j: number, points: numbe
 }
 
 /** Draw a line between two given points (`points[i]` and `points[j]`) in pixels (using Bresenham’s Line Drawing Algorithm) */
-function linePixels(data: ImageData, i: number, j: number, points: number[][], rgb: number[]) {
+export function linePixels(data: ImageData, i: number, j: number, points: number[][], rgb: number[]) {
   let x0 = Math.floor(points[i][0]), y0 = Math.floor(points[i][1]);
   let x1 = Math.floor(points[j][0]), y1 = Math.floor(points[j][1]);
 
@@ -618,10 +618,10 @@ function linePixels(data: ImageData, i: number, j: number, points: number[][], r
     // index is vertical coordinate times width, plus horizontal coordinate, times 4 because every pixel consists of 4 bytes
     if (steep) index = (x * data.width + y) * 4; // y, x
     else index = (y * data.width + x) * 4; // x, y
-    data[index] = rgb[0];
-    data[index + 1] = rgb[1];
-    data[index + 2] = rgb[2];
-    data[index + 3] = rgb[3] ?? 255;
+    data.data[index] = rgb[0];
+    data.data[index + 1] = rgb[1];
+    data.data[index + 2] = rgb[2];
+    data.data[index + 3] = rgb[3] ?? 255;
     error += deltaY;
     if ((error << 1) >= deltaX) {
       y += yStep;

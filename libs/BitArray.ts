@@ -9,8 +9,8 @@ export class BitArray {
   constructor(arg: number | Bit[]) {
     if (typeof arg === "number") {
       // Size
-      this._length = arg[0];
-      this._data = new Uint8Array(Math.ceil(arg[0] / 8));
+      this._length = arg;
+      this._data = new Uint8Array(Math.ceil(this._length / 8));
     } else {
       // Items
       this._length = arg.length;
@@ -45,7 +45,7 @@ export class BitArray {
   }
 
   /** Get bit at position */
-  public get(index: number): Bit {
+  public get(index: number) {
     if (index < 0 || index >= this.length) return undefined;
     const mask = 1 << (index % 8);
     return (this._data[Math.floor(index / 8)] & mask) === mask ? 1 : 0;
@@ -53,7 +53,7 @@ export class BitArray {
 
   /** Convert to array */
   public toArray() {
-    return Array.from<number, Bit>({ length: this.length }, (_, i) => this.get(i));
+    return Array.from<number, Bit>({ length: this.length }, (_, i) => this.get(i) as Bit);
   }
 
   public toArrayBuffer() {

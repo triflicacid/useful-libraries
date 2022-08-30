@@ -98,7 +98,7 @@ export class Matrix {
 
   /** Transpose this matrix: returns new Matrix */
   public transpose() {
-    const mat = [];
+    const mat: Complex[][] = [];
     for (let r = 0; r < this.rows; r++) {
       for (let c = 0; c < this.cols; c++) {
         if (!mat[c]) mat[c] = [];
@@ -115,7 +115,7 @@ export class Matrix {
 
   /** Get minor matrix from position */
   public getMinor(row: number, col: number) {
-    const minor = [];
+    const minor: Complex[][] = [];
     for (let r = 0, ri = 0; r < this.rows; r++) {
       if (r === row) continue;
       minor[ri] = [];
@@ -130,7 +130,7 @@ export class Matrix {
 
   /** Calculate matrix of minors */
   public getMinors() {
-    const minors = [];
+    const minors: Complex[][] = [];
     for (let r = 0; r < this.rows; r++) {
       minors[r] = [];
       for (let c = 0; c < this.cols; c++) {
@@ -198,7 +198,7 @@ export class Matrix {
 
   public static fromDimensions(rows: number, cols: number, value?: Complex) {
     if (value === undefined) value = new Complex(0);
-    return new Matrix(Array.from({ length: cols }, () => Array.from({ length: rows }, () => value.copy())));
+    return new Matrix(Array.from({ length: cols }, () => Array.from({ length: rows }, () => (value as Complex).copy())));
   }
 
   /** Parse matrix from string: "v v v; v v v;" */
@@ -214,7 +214,7 @@ export class Matrix {
 
   /** Generate matrix from 1D array */
   public static fromArray(array: any[], rows: number, cols: number) {
-    let marr = [], tmp = [];
+    let marr: Complex[][] = [], tmp: Complex[] = [];
     for (let i = 0, c = 1; i < array.length && marr.length < rows; i++) {
       tmp.push(Complex.parse(array[i]));
       if (c === cols) {
@@ -290,7 +290,7 @@ export class Matrix {
 
       let M = 1, det = new Complex(0);
       for (let c = 0; c < matrix.cols; c++) {
-        let scalar = matrix.get(0, c), mat = [];
+        let scalar = matrix.get(0, c), mat: Complex[][] = [];
         for (let r1 = 1, ri = 0; r1 < matrix.rows; r1++) {
           mat[ri] = [];
           for (let c1 = 0; c1 < matrix.cols; c1++) {
@@ -402,8 +402,7 @@ export class Matrix {
 
   /** Return a zero matrix */
   public static zeroes(rows: number, cols?: number) {
-    if (cols === undefined) cols = rows;
-    return new Matrix(Array.from({ length: rows }, (_, r) => Array.from({ length: cols }, (_, c) => new Complex(0))));
+    return new Matrix(Array.from({ length: rows }, (_, r) => Array.from({ length: cols ?? rows }, (_, c) => new Complex(0))));
   }
 }
 

@@ -171,7 +171,7 @@ export class Sound {
    * @returns success?
    */
   public play(): Promise<boolean> {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async resolve => {
       if (!Sounds.isEnabled || this.isPlaying) {
         resolve(false);
         return;
@@ -229,8 +229,8 @@ export class Sound {
   public volume(volume?: number) {
     if (volume !== undefined) {
       volume = clamp(volume, 0, 1);
-      this._volume = volume;
-      (this.gainNode as GainNode).gain.value = volume;
+      this._volume = volume as number;
+      (this.gainNode as GainNode).gain.value = volume as number;
     }
     return this._volume;
   }
@@ -315,7 +315,7 @@ export class Beep {
   public volume(volume?: number) {
     if (volume !== undefined) {
       volume = clamp(volume, 0, 100);
-      this._volume = volume / 100;
+      this._volume = volume as number / 100;
       this.update();
     }
     return this._volume * 100;
@@ -328,7 +328,7 @@ export class Beep {
   public frequency(freq?: number) {
     if (typeof freq === "number") {
       freq = clamp(freq, 0, 24000);
-      this._frequency = freq;
+      this._frequency = freq as number;
       this.update();
     }
     return this._frequency;

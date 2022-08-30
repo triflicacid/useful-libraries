@@ -24,7 +24,7 @@ export function peek<T>(array: T[], n: number): T {
 
 /** Get mouse coordinates over an element from an event */
 export function extractCoords(event: MouseEvent) {
-  const box = (<HTMLElement>event.target).getBoundingClientRect();
+  const box = (event.target as HTMLElement).getBoundingClientRect();
   return [event.clientX - box.left, event.clientY - box.top];
 }
 
@@ -65,7 +65,7 @@ export const clamp = (min: number, max: number, n: number) => {
 export const lerp = (min: number, max: number, dist: number) => min + (max - min) * dist;
 
 /** Capitalise each word in a string */
-export const capitalise = (string: string) => string.split(' ').map(s => s[0].toUpperCase() + s.substr(1).toLowerCase()).join(' ');
+export const capitalise = (string: string) => string.split(' ').map(s => s[0].toUpperCase() + s.substring(1).toLowerCase()).join(' ');
 
 /** Insert spaces between capital letters e.g. "HelloWorld" --> "Hello World" */
 export const spaceBetweenCaps = (str: string): string => str.replace(/(?<=[a-z])(?=[A-Z])/g, ' ');
@@ -82,8 +82,9 @@ export const cartesianToPolar = (x: number, y: number) => ([Math.sqrt(x * x + y 
 /** Given an object, return new object with [key: value] and [value: key] */
 export function createEnum(object: object): object {
   const enumeration = {};
-  for (let key in object)
-    if (object.hasOwnProperty(key)) {
+  for (let k in object)
+    if (object.hasOwnProperty(k)) {
+      let key = k as keyof object;
       enumeration[key] = object[key];
       enumeration[object[key]] = key;
     }
@@ -94,7 +95,7 @@ export function createEnum(object: object): object {
 export const scrollToBottom = (el: HTMLElement) => el.scrollTop = el.scrollHeight;
 
 /** Split string into <nSize> groups  */
-export const groupString = (string: string, nSize: number): string[] => string.match(new RegExp(`.{1,${nSize}}`, 'g'));
+export const groupString = (string: string, nSize: number): string[] => string.match(new RegExp(`.{1,${nSize}}`, 'g')) as string[];
 
 /** Read text from a File object */
 export async function readTextFile(file: File): Promise<string> {
@@ -152,7 +153,7 @@ export function removeChild(parent: HTMLElement, child: HTMLElement): boolean {
 }
 
 /** Parse a HTML string and return as an element */
-export function parseHTML<T = HTMLElement>(html): T {
+export function parseHTML<T = HTMLElement>(html: string): T {
   const div = document.createElement('div');
   div.insertAdjacentHTML("beforeend", html);
   return div.firstElementChild as any;
@@ -304,8 +305,8 @@ export function parseNumber(string: string, opts: IParseNumberOptions = {}) {
       metSeperator = false;
     } else if (pos === 0 && string[pos] === '0' && string[pos + 1] in radices) { // Radix
       pos++;
-      radix = radices[string[pos]];
-    } else if (radicesRegex[radix].test(string[pos])) { // Digit
+      radix = radices[string[pos] as keyof typeof radices];
+    } else if (radicesRegex[radix as keyof typeof radicesRegex].test(string[pos])) { // Digit
       metSeperator = false;
       if (!metSign) metSign = true; // Default to '+'
       if (metDot) {
@@ -328,7 +329,7 @@ export function parseNumber(string: string, opts: IParseNumberOptions = {}) {
       if (opts.exponent) {
         const newOpts = { ...opts };
         newOpts.exponent = false;
-        const obj = parseNumber(string.substr(pos + 1), newOpts);
+        const obj = parseNumber(string.substring(pos + 1), newOpts);
         if (obj.str === '') break;
         pos += 1 + obj.pos;
         exp = obj;
@@ -382,7 +383,7 @@ export function parseCharLit(literal: string): string {
 }
 
 /** Convert given number in base 10 to the provided base */
-export function int_to_base(n, b) {
+export function int_to_base(n: number, b: number) {
   let str = "";
   if (b < 2) return str;
   while (n > 0.1) {
@@ -478,6 +479,7 @@ export function getAngleBetween(point1: IVec, point2: IVec) {
   if (point2.x < point1.x && point2.y > point1.y) return Math.PI + Math.atan((point2.y - point1.y) / (point1.x - point2.x)); // Bottom Left
   if (point1.x === point2.x && point2.y > point1.y) return 1.5 * Math.PI; // Down
   if (point2.x > point1.x && point2.y > point1.y) return 2 * Math.PI - Math.atan((point2.y - point1.y) / (point2.x - point1.x)); // Bottom Left
+  return NaN;
 }
 
 export interface IVec {

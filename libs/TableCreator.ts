@@ -207,11 +207,11 @@ function parseString(string: string): { error: boolean, output: string; index: n
 /** Parse CSV */
 function parseCSV(input: string, seperator = ',') {
     const _sr = /\s/;
-    const lines = [], rows = input.split(/\r\n|\r|\n/g);
+    const lines: string[][] = [], rows = input.split(/\r\n|\r|\n/g);
     if (rows[rows.length - 1]?.length === 0) rows.pop();
     for (let ri = 0; ri < rows.length; ri++) {
         const row = rows[ri];
-        const items = [];
+        const items: string[] = [];
         for (let i = 0; i < row.length; i++) {
             if (_sr.test(row[i])) continue;
             if (row[i] === '"') {

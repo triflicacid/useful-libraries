@@ -51,7 +51,7 @@ export default class Piechart {
 
   constructor(canvas: HTMLCanvasElement) {
     this._canvas = canvas;
-    this._ctx = canvas.getContext("2d");
+    this._ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
   }
 
   get radius() { return this._radius; }
@@ -146,7 +146,7 @@ export default class Piechart {
   isOverLabel(label: string, position: number[]) {
     if (this._data.hasOwnProperty(label)) {
       const data = this._data[label];
-      return isInsideSector(position, this.getPos(), this.radius, data.angleStart, data.angleEnd);
+      return isInsideSector(position, this.getPos(), this.radius, data.angleStart ?? 0, data.angleEnd ?? Math.PI);
     } else {
       return false;
     }

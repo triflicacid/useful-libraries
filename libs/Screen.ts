@@ -33,8 +33,8 @@ export class CustomScreen {
   private _ctx: CanvasRenderingContext2D;
   public x: number = 0; // X-position
   public y: number = 0; // Y-position
-  private _foreground: ScreenColour;
-  private _background: ScreenColour;
+  private _foreground: ScreenColour = "#FFFFFF";
+  private _background: ScreenColour = "#000000";
   private _savedStates: IScreenState[] = [];
   private _padding: number = 0; // Text padding
   public font: Font;
@@ -44,7 +44,7 @@ export class CustomScreen {
     this._canvas = document.createElement('canvas');
     this._wrapper.appendChild(this._canvas);
     this._canvas.classList.add('screen');
-    this._ctx = this._canvas.getContext('2d');
+    this._ctx = this._canvas.getContext('2d') as CanvasRenderingContext2D;
     this.font = new Font();
     this.reset();
   }
@@ -65,10 +65,10 @@ export class CustomScreen {
   public setHeight(value: number): CustomScreen { this._canvas.height = value; this.clear(); return this; }
 
 
-  public getForeground(): ScreenColour { return this._foreground; }
+  public getForeground(): ScreenColour { return this._foreground as ScreenColour; }
   public setForeground(value: ScreenColour): CustomScreen { this._foreground = value; return this; }
 
-  public getBackground(): ScreenColour { return this._background; }
+  public getBackground(): ScreenColour { return this._background as ScreenColour; }
   public setBackground(value: ScreenColour): CustomScreen { this._background = value; return this; }
 
   public getPadding(): number { return this._padding; }
@@ -134,7 +134,7 @@ export class CustomScreen {
 
   public restoreState(): boolean {
     if (this._savedStates.length > 0) {
-      const state = this._savedStates.pop();
+      const state = this._savedStates.pop() as IScreenState;
       this._foreground = state.foreground;
       this._background = state.background;
       this.x = state.x;

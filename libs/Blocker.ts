@@ -7,8 +7,8 @@ export class BlockerCancelledError extends Error {
 
 /** Acts as a code block when called in async functions */
 export class Blocker {
-  private _resolve: (value: unknown) => void | undefined = undefined;
-  private _reject: (reason?: any) => void | undefined = undefined;
+  private _resolve: ((value: unknown) => void) | undefined = undefined;
+  private _reject: ((reason?: any) => void) | undefined = undefined;
 
   /** Are we currently blocking execution? */
   public isBlocking() { return this._resolve !== undefined; }
@@ -34,7 +34,7 @@ export class Blocker {
   public unblock(value: any) {
     if (this.isBlocking()) {
       this._reject = undefined;
-      this._resolve(value);
+      if (this._resolve) this._resolve(value);
       this._resolve = undefined;
     } else {
       throw new Error(`#<Blocker>.unblock: nothing to unblock`);
@@ -45,7 +45,7 @@ export class Blocker {
   public error(e: Error) {
     if (this.isBlocking()) {
       this._resolve = undefined;
-      this._reject(e);
+      if (this._reject) this._reject(e);
       this._reject = undefined;
     } else {
       throw new Error(`#<Blocker>.error: no block available to throw error on`);

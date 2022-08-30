@@ -6,7 +6,7 @@ import { DBL_EPSILON, PI } from "./constants";
  * @implementation from SciPy: https://github.com/scipy/scipy/blob/master/scipy/special/wright.cc
  */
 
-export function wrightomega_ext(z: Complex, cond: Complex = null): Complex {
+export function wrightomega_ext(z: Complex, cond?: Complex): Complex {
     let s = 1;
     let near = 0.01, e: Complex, r: Complex, pz: Complex, wp1: Complex, t: Complex, fac: Complex, w: Complex;
 

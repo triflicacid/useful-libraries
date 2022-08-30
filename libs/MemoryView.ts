@@ -1,4 +1,5 @@
-import CustomScreen, { ITextMeasurements, withinState } from "./Screen";
+import CustomScreen, { ITextMeasurements, withinState, ScreenColour } from "./Screen";
+import type { Font } from "./Font";
 import { clamp, downloadBlob, downloadTextFile, readBinaryFile } from "./utils";
 
 export interface IMemoryViewCache {
@@ -19,14 +20,14 @@ export class MemoryView {
   private _base = 16;
   private _text = new TextDecoder("utf8");
   public displayText = false;
-  private _cache: IMemoryViewCache;
+  private _cache: IMemoryViewCache | undefined;
   private _startAddr = 0;
 
-  public colorAddresses = new Map<number, string>();
+  public colorAddresses = new Map<number, ScreenColour>();
 
   constructor(wrapper: HTMLDivElement, dataView: DataView) {
     this.screen = new CustomScreen(wrapper);
-    this.screen.updateFont(font => {
+    this.screen.updateFont((font: Font) => {
       font.family = "consolas";
       font.size = 11;
     });
@@ -94,35 +95,36 @@ export class MemoryView {
 
     // Headers
     S.saveState();
-    S.updateFont(font => {
+    S.updateFont((font: Font) => {
       font.weight = 900;
     });
     S.setForeground("lime");
 
-    S.y = this._cache.ySpacing / 3;
+    const cache = this._cache as IMemoryViewCache;
+    S.y = cache.ySpacing / 3;
     // Column headers
-    S.y = this._cache.ySpacing;
-    S.x = this._cache.rowTitleWidth - this._cache.offsetLabelsDimensions.width;
+    S.y = cache.ySpacing;
+    S.x = cache.rowTitleWidth - cache.offsetLabelsDimensions.width;
     for (let col = 0, addr = this._startAddr; col < this._cols; col++, addr += this._rows) {
-      let text = addr.toString(this._base).padStart(this._cache.offsetLabelsLength, '0') + ':';
+      let text = addr.toString(this._base).padStart(cache.offsetLabelsLength, '0') + ':';
       S.writeString(text, false);
-      S.y += this._cache.ySpacing;
+      S.y += cache.ySpacing;
     }
 
     // Determine what space we've got left
-    const startX = this._cache.rowTitleWidth + this._cache.xPad, startY = this._cache.ySpacing / 2 - 0.5 * this._cache.offsetLabelsDimensions.height;
+    const startX = cache.rowTitleWidth + cache.xPad, startY = cache.ySpacing / 2 - 0.5 * cache.offsetLabelsDimensions.height;
     S.y = startY;
     S.x = startX;
     // Row headers
     for (let row = 0; row < this._rows; row++) {
       let text = row.toString(this._base).padStart(2, '0');
       S.writeString(text, false);
-      S.x += this._cache.xSpacing;
+      S.x += cache.xSpacing;
     }
     S.restoreState();
 
     S.x = startX;
-    S.y = this._cache.ySpacing;
+    S.y = cache.ySpacing;
     S.setForeground('lightgrey');
     const maxLength = (255).toString(this._base).length;
     // Address values
@@ -132,8 +134,8 @@ export class MemoryView {
           let value = D.getUint8(addr);
           let text = this.displayText ? this._textDecode(value) : value.toString(this.base).padStart(maxLength, '0');
           if (this.colorAddresses.has(addr)) {
-            withinState(this.screen, S => {
-              S.setForeground(this.colorAddresses.get(addr));
+            withinState(this.screen, (S: CustomScreen) => {
+              S.setForeground(this.colorAddresses.get(addr) as ScreenColour);
               S.writeString(text, false);
             });
           } else {
@@ -142,9 +144,9 @@ export class MemoryView {
         } else {
           S.writeString('-', false);
         }
-        S.x += this._cache.xSpacing;
+        S.x += cache.xSpacing;
       }
-      S.y += this._cache.ySpacing;
+      S.y += cache.ySpacing;
       S.x = startX;
     }
   }
@@ -154,8 +156,9 @@ export class MemoryView {
     const relAddress = address - this.startAddress; // Address relative to where we are in the view
     const row = Math.floor(relAddress / this._rows);
     const col = relAddress - (row * this._rows);
-    let x = (this._cache.rowTitleWidth + this._cache.xPad) + (col * this._cache.xSpacing);
-    let y = this._cache.ySpacing + (row * this._cache.ySpacing);
+    const cache = this._cache as IMemoryViewCache;
+    let x = (cache.rowTitleWidth + cache.xPad) + (col * cache.xSpacing);
+    let y = cache.ySpacing + (row * cache.ySpacing);
     this.screen.x = x;
     this.screen.y = y;
 
@@ -164,8 +167,8 @@ export class MemoryView {
       const maxLength = (255).toString(this._base).length;
       let text = this.displayText ? this._textDecode(value) : value.toString(this.base).padStart(maxLength, '0');
       if (this.colorAddresses.has(address)) {
-        withinState(this.screen, S => {
-          S.setForeground(this.colorAddresses.get(address));
+        withinState(this.screen, (S: CustomScreen) => {
+          S.setForeground(this.colorAddresses.get(address) as ScreenColour);
           S.writeString(text, false);
         });
       } else {
@@ -219,7 +222,7 @@ export function generateControl(options: IControlOptions) {
     eventMap.forEach((handle, type) => viewDiv.removeEventListener(type, handle));
     viewDiv.remove();
     options.wrapper.remove();
-    for (let key in DATA) delete DATA[key];
+    (Object.keys(DATA) as (keyof IControlReturnData)[]).forEach(key => delete DATA[key]);
   }
   const DATA = { wrapper: options.wrapper, view, dataView: options.dataView, updateGUI, remove } as IControlReturnData;
 
@@ -234,7 +237,7 @@ export function generateControl(options: IControlOptions) {
     } else {
       view.colorAddresses.delete(addressViewing);
       addressViewing = addr;
-      view.colorAddresses.set(addressViewing, options.colorCurrent);
+      view.colorAddresses.set(addressViewing, options.colorCurrent as string);
       if (addr >= 0 && addr < view.length) {
         const decimal = DATA.dataView.getUint8(addr);
         inputAddressValue.value = decimal.toString();
@@ -270,7 +273,7 @@ export function generateControl(options: IControlOptions) {
       DATA.dataView.setUint8(addressViewing, decimal);
       view.update(addressViewing);
       updateGUI();
-      options.onupdate(DATA.dataView);
+      if (options.onupdate) options.onupdate(DATA.dataView);
     }
     inputtedAddress(inputAddress.value); // Reset
     e.preventDefault();
@@ -296,7 +299,7 @@ export function generateControl(options: IControlOptions) {
           new Uint8Array(buff).set(new Uint8Array(DATA.dataView.buffer), 0);
         }
         DATA.dataView = new DataView(buff);
-        options.onupdate(DATA.dataView);
+        if (options.onupdate) options.onupdate(DATA.dataView);
         view.setDataView(DATA.dataView);
         view.update();
       }
@@ -326,7 +329,7 @@ export function generateControl(options: IControlOptions) {
   for (let b = 2; b <= 36; b++) displayBaseSelect.insertAdjacentHTML("beforeend", `<option value='${b}'${b === view.base ? ' selected' : ''}>${b}</option>`);
   displayBaseSelect.addEventListener("change", () => {
     view.base = parseInt(displayBaseSelect.value);
-    options.onupdate(DATA.dataView);
+    if (options.onupdate) options.onupdate(DATA.dataView);
     view.update();
   });
   p.appendChild(displayBaseSelect);
@@ -393,7 +396,7 @@ export function generateControl(options: IControlOptions) {
     inputAddress.max = view.length.toString();
     view.colorAddresses.delete(addressViewing);
     addressViewing = clamp(0, view.length, addressViewing);
-    view.colorAddresses.set(addressViewing, options.colorCurrent);
+    view.colorAddresses.set(addressViewing, options.colorCurrent as string);
     btnEnd.innerText = view.length.toString(view.base);
     inputAddress.value = addressViewing.toString();
     inputtedAddress(addressViewing);
@@ -451,7 +454,7 @@ export function generateControl(options: IControlOptions) {
       }
       updateGUI();
       view.update();
-      options.onupdate(DATA.dataView);
+      if (options.onupdate) options.onupdate(DATA.dataView);
     });
     p.appendChild(btnSetInRange);
     btnSetAll = document.createElement("button");
@@ -463,7 +466,7 @@ export function generateControl(options: IControlOptions) {
       }
       updateGUI();
       view.update();
-      options.onupdate(DATA.dataView);
+      if (options.onupdate) options.onupdate(DATA.dataView);
     });
     p.appendChild(btnSetAll);
     btnSetInputRange = document.createElement("button");
@@ -491,7 +494,7 @@ export function generateControl(options: IControlOptions) {
       addressViewing = range[0];
       updateGUI();
       view.update();
-      options.onupdate(DATA.dataView);
+      if (options.onupdate) options.onupdate(DATA.dataView);
     });
     p.appendChild(btnSetInputRange);
     p.insertAdjacentHTML('beforeend', ' &nbsp;to ');
@@ -533,7 +536,7 @@ export function generateControl(options: IControlOptions) {
       }
       updateGUI();
       view.update();
-      options.onupdate(DATA.dataView);
+      if (options.onupdate) options.onupdate(DATA.dataView);
     });
     p.insertAdjacentHTML("beforeend", " ");
     let inputText = document.createElement("input");
@@ -629,13 +632,13 @@ export function generateControl(options: IControlOptions) {
     let inputUpload = document.createElement('input');
     inputUpload.type = 'file';
     upload = async () => {
-      const file = inputUpload.files[0];
+      const file = (inputUpload.files as FileList)[0];
       if (file) {
         let buff = await readBinaryFile(file);
         if (!options.resizable && buff.byteLength !== DATA.dataView.byteLength) return alert(`Uploaded file must contain ${DATA.dataView.byteLength} bytes; got ${buff.byteLength} bytes`);
         DATA.dataView = new DataView(buff);
         view.setDataView(DATA.dataView);
-        options.onupdate(DATA.dataView);
+        if (options.onupdate) options.onupdate(DATA.dataView);
         updateGUI();
       }
     };
@@ -695,7 +698,7 @@ export function generateControl(options: IControlOptions) {
         DATA.dataView.setUint8(addressViewing, editMSN ? ((n << 4) | (val & 0x0f)) : ((val & 0xf0) | n));
         updateGUI();
         view.update();
-        options.onupdate(DATA.dataView);
+        if (options.onupdate) options.onupdate(DATA.dataView);
         editMSN = !editMSN;
       } else if (key === 'i') {
         inputAddressValue.focus();

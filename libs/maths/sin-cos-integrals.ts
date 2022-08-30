@@ -5,7 +5,7 @@
  * 
  * fi(x) = integrate sin(t)/(t+x) between 0->inf
  */
-export function auxiliarySinIntegral(x: number) {
+ export function auxiliarySinIntegral(x: number) {
   if (x < 0) return NaN;
   if (x === 0) return pi2;
   if (x <= 1) {
@@ -24,7 +24,7 @@ export function auxiliarySinIntegral(x: number) {
  * 
  * gi(x) = integrate cos(t)/(t+x) between 0->inf
  */
-export function auxiliaryCosIntegral(x: number) {
+export function auxiliaryCosIntegral(x: number): number {
   if (x < 0) return NaN;
   if (x === 0) return Infinity;
   if (x <= 1) {
@@ -43,7 +43,7 @@ export function auxiliaryCosIntegral(x: number) {
  * 
  * Si(x) = integrate sin(t)/t between x->inf
  */
-export function sinIntegral(x: number) {
+export function sinIntegral(x: number): number {
   let ax = Math.abs(x);
   if (ax <= 1) return siPowerSeries(x);
   let fi = auxiliarySinIntegral(ax);
@@ -57,7 +57,7 @@ export function sinIntegral(x: number) {
  * 
  * Ci(x) = integrate -cos(t)/t between x->inf
  */
-export function cosIntegral(x: number) {
+export function cosIntegral(x: number): number {
   if (x === 0) return -Infinity;
   if (Math.abs(x) <= 1) Math.log(Math.abs(x)) + eulerGamma - cinPowerSeries(x);
   return ci_asymptoticSeries(x);
@@ -68,7 +68,7 @@ export function cosIntegral(x: number) {
  * 
  * Cin(x) = integrate (1-cos(t))/t between 0->x
  */
-export function entireCosineIntegral(x: number) {
+export function entireCosineIntegral(x: number): number {
   if (Math.abs(x) <= 1) return cinPowerSeries(x);
   return Math.log(Math.abs(x)) + eulerGamma - ci_asymptoticSeries(x);
 }

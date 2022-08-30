@@ -28,13 +28,13 @@ export class Stack<T> {
    * Return top item of the stack
    * @returns {any}
    */
-  public top(): T { return this.empty() ? undefined : this._data[this._data.length - 1]; }
+  public top() { return this.empty() ? undefined : this._data[this._data.length - 1]; }
 
   /**
    * Pop and return top value off of stack
    * @returns {any}
    */
-  public pop(): T { return this._data.pop(); }
+  public pop() { return this._data.pop(); }
 
   /**
    * Get item at any index

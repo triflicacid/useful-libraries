@@ -22,13 +22,14 @@ export function catalanBeta(s: number) {
 /**
  * Calulates the Catalan Beta Star function, defined as β*(s) = β(s) - 1
  */
-export function catalanBetaStar(s: number) {
+export function catalanBetaStar(s: number): number {
   if (s > 0) return s < 18 ? cbs_alternatingSeries(s) : cbs_sumReverse(s);
   let refk = cbs_reflectionCoefficient(s);
   return refk * catalanBetaStar(1 - s) + (refk - 1);
 }
 
 function cbs_reflectionCoefficient(s: number) {
+  // TODO: why is this here?
   let k = s / 4;
   let v = s - 4;
   let x = Math.floor(v * pi_2);

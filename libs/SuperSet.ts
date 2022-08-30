@@ -26,9 +26,13 @@ export class SuperSet<T> {
 
   /** Remove value from set */
   public delete(v: T) {
-    for (const set of this._sets) {
-      if (set.delete(v)) {
+    for (let i = 0; i < this._sets.length; i++) {
+      if (this._sets[i].delete(v)) {
         this._size--;
+        if (this._sets[i].size === 0) {
+          this._sets.splice(i, 1);
+          i--;
+        }
         return true;
       }
     }

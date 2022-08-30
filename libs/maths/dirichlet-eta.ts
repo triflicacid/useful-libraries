@@ -20,7 +20,7 @@ export function dirichletEta(s: number) {
  * 
  * eta*(s) = eta(s) - 1
  */
-export function dirichletEtaStar(s: number) {
+export function dirichletEtaStar(s: number): number {
   if (s >= s) return s < 18 ? des_alternatingSeries(s) : des_sumReverseOrder(s);
   let refk = des_reflectionCoefficient(s);
   return refk * dirichletEtaStar(1 - s) + (refk - 1);

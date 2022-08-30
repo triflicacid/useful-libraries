@@ -229,17 +229,17 @@ export function poly_zdiv(a: IZPolynomial, b: IZPolynomial) {
 /** Given a polynomial p(x), return p'(x) */
 export function poly_differentiate(p: IPolynomial) {
   return Object.keys(p).reduce((o, k) => {
-    if (+k !== 0) o[+k - 1] = p[k] * +k;
+    if (+k !== 0) o[+k - 1] = p[+k] * +k;
     return o;
-  }, {});
+  }, {} as IPolynomial);
 }
 
 /** Given a complex polynomial p(z), return p'(z) */
 export function poly_zdifferentiate(p: IZPolynomial) {
   return Object.keys(p).reduce((o, k) => {
-    o[+k - 1] = Complex.mult(p[k], +k);
+    o[+k - 1] = Complex.mult(p[+k], +k);
     return o;
-  }, {});
+  }, {} as IZPolynomial);
 }
 
 /** Given a polynomial p'(x), return p(x)
@@ -248,9 +248,9 @@ export function poly_zdifferentiate(p: IZPolynomial) {
 */
 export function poly_integrate(p: IPolynomial) {
   return Object.keys(p).reduce((o, k) => {
-    if (+k !== -1) o[+k + 1] = p[k] / (+k + 1);
+    if (+k !== -1) o[+k + 1] = p[+k] / (+k + 1);
     return o;
-  }, {});
+  }, {} as IPolynomial);
 }
 
 /** Given a complex polynomial p'(\), return p(z)
@@ -259,9 +259,9 @@ export function poly_integrate(p: IPolynomial) {
 */
 export function poly_zintegrate(p: IPolynomial) {
   return Object.keys(p).reduce((o, k) => {
-    if (+k !== -1) o[+k + 1] = Complex.div(p[k], +k + 1);
+    if (+k !== -1) o[+k + 1] = Complex.div(p[+k], +k + 1);
     return o;
-  }, {});
+  }, {} as IZPolynomial);
 }
 
 /** return string from a polynomial object, p(x) */
