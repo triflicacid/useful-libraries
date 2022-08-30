@@ -574,3 +574,48 @@ export function parseArgstring(argstr: string) {
   }
   return data;
 }
+
+/** Return object which will run a callback at `fps` times per second */
+export function createAnimation() {
+  let frameCount = 0, fps = 60;
+  let _stop = false, _fpsInterval: number, _startTime: number, _now: number, _then: number, _elapsed: number, _callback: () => void;
+
+  /** Start executing `callback` at `fps` times per second*/
+  function start(callback: () => void) {
+    _fpsInterval = 1000 / fps;
+    _then = Date.now();
+    _callback = callback;
+    _animate();
+  }
+
+  function _animate() {
+    if (_stop) return;
+    // Calculate elapsed time since last loop
+    _now = Date.now();
+    _elapsed = _now - _then;
+
+    // If enough time has elapsed, execute callback
+    if (_elapsed > _fpsInterval) {
+      _then = _now - (_elapsed % _fpsInterval); // Get ready for next frame by setting then=now
+      _callback();
+    }
+
+    requestAnimationFrame(_animate);
+  }
+
+  /** Stop execution. Return number of times `callback` was executed */
+  function stop() {
+    _stop = true;
+    let fc = frameCount;
+    frameCount = 0;
+    return fc;
+  }
+
+  return {
+    getFrameCount: () => frameCount,
+    getFPS: () => fps,
+    setFPS: (n: number) => fps = n,
+    start,
+    stop,
+  };
+}

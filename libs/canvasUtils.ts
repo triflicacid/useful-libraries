@@ -92,3 +92,25 @@ export function plotPolyon(ctx: CanvasRenderingContext2D, centre: IVec, ...point
 export function getPixelColor(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, x: number, y: number) {
   return Array.from(ctx.getImageData(x, y, 1, 1).data);
 }
+
+/** Return OffscreenCanvas containing the given image data */
+export function loadImage(url: string) {
+  return new Promise(resolve => {
+    const image = new Image();
+    image.onload = () => {
+      const oc = new OffscreenCanvas(image.width, image.height);
+      const ctx = oc.getContext('2d');
+      ctx.drawImage(image, 0, 0);
+      resolve(oc);
+    };
+    image.src = url;
+  });
+}
+
+/** Given OffscreenCanvas, return OffscreenCanvas with section extractd from `oc` */
+export function extractImage(oc: OffscreenCnavas, x: number, y: number, w: number, h: number) {
+  let other = new OffscreenCanvas(w, h);
+  let data = oc.getContext("2d").getImageData(x, y, w, h);
+  other.getContext("2d").putImageData(data, 0, 0);
+  return other;
+}
