@@ -83,6 +83,11 @@ For this, focus must be on the div. Arrows will change move the edit cursor. Pre
 
 **Dependencies**: `Screen.ts`, `utils.ts`
 
+# `perlin-noise.ts`
+**About**: A function which creates a perlin noise grid `(x, y)`
+
+**Dependencies**: *None*
+
 # `Piechart.ts`
 **About**: A class to create a Piechart
 
