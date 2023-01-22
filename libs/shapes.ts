@@ -204,7 +204,6 @@ export function drawCuboid(ctx: CanvasRenderingContext2D, cuboid: ICube | ICuboi
   for (let i = 0; i < 4; i++) line(ctx, i, i + 4, points);
 
   // Vertices
-  vertexRadius = 4;
   if (vertexRadius > 0)
     for (const P of points)
       if (P[2] > 0) {
@@ -506,6 +505,8 @@ export function drawShape<T extends IShape>(ctx: CanvasRenderingContext2D, shape
       return drawRectangle(ctx, shape as any, cam, vertexRadius);
     case ShapeType.Sphere:
       return drawSphere(ctx, shape as any, cam, SPHERE_CONNECT_LAT | SPHERE_CONNECT_LON, vertexRadius);
+    default:
+      throw new TypeError(`Unknown shape type: ${shape.type}`);
   }
 }
 
@@ -546,7 +547,7 @@ export function transformShape<T extends IShape>(shape: T, transformations: Matr
   return newShape;
 }
 
-/** Draw array of 3D points (circles) */
+/** Draw array of 2D points (circles) */
 export function drawPoints(ctx: CanvasRenderingContext2D, points: Point2D[], radius = 3) {
   for (let point of points) {
     ctx.beginPath();
@@ -555,7 +556,7 @@ export function drawPoints(ctx: CanvasRenderingContext2D, points: Point2D[], rad
   }
 }
 
-/** Connect array of 3D points */
+/** Connect array of 2D points */
 export function drawPointsConnected(ctx: CanvasRenderingContext2D, points: Point2D[]) {
   ctx.beginPath();
   ctx.moveTo(points[0][0], points[0][1]);
@@ -583,7 +584,7 @@ export function drawPixels(data: ImageData, points: Point3D[], dx: number, dy: n
 }
 
 /** Draw a line between two given points (`points[i]` and `points[j]`) */
-function line(ctx: CanvasRenderingContext2D, i: number, j: number, points: number[][]) {
+export function line(ctx: CanvasRenderingContext2D, i: number, j: number, points: number[][]) {
   ctx.beginPath();
   ctx.moveTo(points[i][0], points[i][1]);
   ctx.lineTo(points[j][0], points[j][1]);

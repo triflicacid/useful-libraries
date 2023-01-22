@@ -1,5 +1,5 @@
 import { Matrix } from "../libs/maths/Matrix";
-import { createCamera, createCube, createPyramid, createSphere, drawShape, IShape, moveShape, Point3D, transformShape } from "../libs/shapes";
+import { createCamera, createCube, createSphere, drawShape, IShape, moveShape, Point3D, transformShape } from "../libs/shapes";
 
 function main() {
   const canvas = document.createElement("canvas");

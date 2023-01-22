@@ -435,12 +435,9 @@ export class Matrix {
     return new Matrix(Array.from({ length: rows }, (_, r) => Array.from({ length: cols }, () => 0)));
   }
 
-  /** 3D to 2D: create orthographic projection matrix (3x2). Perfect top-view, meaning z component (depth) is ignored */
-  public static projectionOrthographic() {
-    return new Matrix([
-      [1, 0, 0],
-      [0, 1, 0],
-    ]);
+  /** Create orthographic projection matrix from N to N-1 dimensions (default: 3 to 2). Perfect top-view, meaning Nth component (depth) is ignored, but may be incorporated using `k` */
+  public static projectionOrthographic(N = 3, k = 1) {
+    return new Matrix(Array.from({ length: N - 1 }, (_, r) => Array.from({ length: N }, (_, c) => (r === c ? k : 0))));
   }
 
   /**
@@ -475,7 +472,7 @@ export class Matrix {
     ]);
   }
 
-  /** Create 2D translation matrix */
+  /** Create 2D translation matrix. Same as `translateND(x, y)` */
   public static translate2D(x: number, y: number) {
     return new Matrix([
       [1, 0, 0],
@@ -484,7 +481,7 @@ export class Matrix {
     ]);
   }
 
-  /** Create 2D rotation matrix, to rotate a point `phi` radians ANTICLOCKWISE around the origin */
+  /** Create 2D rotation matrix, to rotate a point `phi` radians ANTICLOCKWISE around the origin. Same as `rotateXY(2, phi)` */
   public static rotate2D(phi: number) {
     return new Matrix([
       [Math.cos(phi), -Math.sin(phi)],
@@ -492,7 +489,7 @@ export class Matrix {
     ]);
   }
 
-  /** Create 3D translation matrix */
+  /** Create 3D translation matrix. Same as `translateND(x, y, z)` */
   public static translate3D(x: number, y: number, z: number) {
     return new Matrix([
       [1, 0, 0, 0],
@@ -502,7 +499,15 @@ export class Matrix {
     ]);
   }
 
-  /** Create 3D rotation matrix, to rotate a point `phi` radians ANTICLOCKWISE around the Z-axis */
+  /** Create an N-dimensional translation matrix, where `N = values.length` */
+  public static translateND(...values: number[]) {
+    const mat = Matrix.identity(values.length + 1);
+    for (let i = 0; i < values.length; i++)
+      mat.matrix[values.length][i] = values[i];
+    return mat;
+  }
+
+  /** Create 3D rotation matrix, to rotate a point `phi` radians ANTICLOCKWISE around the Z-axis. Same as `rotateXY(3, phi)` */
   public static rotate3DZ(phi: number) {
     return new Matrix([
       [Math.cos(phi), -Math.sin(phi), 0],
@@ -511,7 +516,18 @@ export class Matrix {
     ]);
   }
 
-  /** Create 3D rotation matrix, to rotate a point `phi` radians ANTICLOCKWISE around the X-axis */
+  /** Create an N-dimensional (N > 1) rotational matrix, which will rotate a point `phi` radians anticlockwise about the XY plane */
+  public static rotateXY(dim: number, phi: number) {
+    if (dim <= 1) throw new Error(`Dimension must be greater than 1, got ${dim}`);
+    const mat = Matrix.identity(dim);
+    mat.matrix[0][0] = Math.cos(phi);
+    mat.matrix[0][1] = -Math.sin(phi);
+    mat.matrix[1][0] = Math.sin(phi);
+    mat.matrix[1][1] = Math.cos(phi);
+    return mat;
+  }
+
+  /** Create 3D rotation matrix, to rotate a point `phi` radians ANTICLOCKWISE around the X-axis. Same as `rotateYZ(3, phi)` */
   public static rotate3DX(phi: number) {
     return new Matrix([
       [1, 0, 0],
@@ -520,13 +536,57 @@ export class Matrix {
     ]);
   }
 
-  /** Create 3D rotation matrix, to rotate a point `phi` radians ANTICLOCKWISE around the Y-axis */
+  /** Create an N-dimensional (N > 2) rotational matrix, which will rotate a point `phi` radians anticlockwise about the YZ plane */
+  public static rotateYZ(dim: number, phi: number) {
+    if (dim <= 2) throw new Error(`Dimension must be greater than 2, got ${dim}`);
+    const mat = Matrix.identity(dim);
+    mat.matrix[1][1] = Math.cos(phi);
+    mat.matrix[1][2] = -Math.sin(phi);
+    mat.matrix[2][1] = Math.sin(phi);
+    mat.matrix[2][2] = Math.cos(phi);
+    return mat;
+  }
+
+  /** Create 3D rotation matrix, to rotate a point `phi` radians ANTICLOCKWISE around the Y-axis. Same as `rotateXZ(3, phi)` */
   public static rotate3DY(phi: number) {
     return new Matrix([
       [Math.cos(phi), 0, Math.sin(phi)],
       [0, 1, 0],
       [-Math.sin(phi), 0, Math.cos(phi)],
     ]);
+  }
+
+  /** Create an N-dimensional (N > 2) rotational matrix, which will rotate a point `phi` radians anticlockwise about the XZ plane */
+  public static rotateXZ(dim: number, phi: number) {
+    if (dim <= 2) throw new Error(`Dimension must be greater than 2, got ${dim}`);
+    const mat = Matrix.identity(dim);
+    mat.matrix[0][0] = Math.cos(phi);
+    mat.matrix[0][2] = Math.sin(phi);
+    mat.matrix[2][0] = -Math.sin(phi);
+    mat.matrix[2][2] = Math.cos(phi);
+    return mat;
+  }
+
+  /** Create an N-dimensional (N > 3) rotational matrix, which will rotate a point `phi` radians anticlockwise about the XW plane */
+  public static rotateXW(dim: number, phi: number) {
+    if (dim <= 3) throw new Error(`Dimension must be greater than 3, got ${dim}`);
+    const mat = Matrix.identity(dim);
+    mat.matrix[0][0] = Math.cos(phi);
+    mat.matrix[0][3] = -Math.sin(phi);
+    mat.matrix[3][0] = Math.sin(phi);
+    mat.matrix[3][3] = Math.cos(phi);
+    return mat;
+  }
+
+  /** Create an N-dimensional (N > 3) rotational matrix, which will rotate a point `phi` radians anticlockwise about the ZW plane */
+  public static rotateZW(dim: number, phi: number) {
+    if (dim <= 3) throw new Error(`Dimension must be greater than 3, got ${dim}`);
+    const mat = Matrix.identity(dim);
+    mat.matrix[2][2] = Math.cos(phi);
+    mat.matrix[2][3] = -Math.sin(phi);
+    mat.matrix[3][2] = Math.sin(phi);
+    mat.matrix[3][3] = Math.cos(phi);
+    return mat;
   }
 
   /**
