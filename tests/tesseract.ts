@@ -30,10 +30,8 @@ function main() {
     [-1, +1, +1, -1],
   ];
 
-  // const dist
   const dist = 2;
   let angle = 0;
-  const rotation = Matrix.rotate3DX(-Math.PI / 2);
 
   requestAnimationFrame(function loop() {
     ctx.fillStyle = "black";
@@ -42,11 +40,10 @@ function main() {
       let mat = Matrix.fromVector(...point);
       mat = Matrix.mult(Matrix.rotateXY(4, angle), mat);
       mat = Matrix.mult(Matrix.rotateZW(4, angle), mat);
-      // mat = Matrix.mult(Matrix.rotateXZ(4, angle), mat);
+      mat = Matrix.mult(Matrix.rotateYZ(4, angle), mat);
       const w = 1 / (dist - mat.matrix[3][0]);
       mat = Matrix.mult(Matrix.projectionOrthographic(4, w), mat);
       mat = mat.scalarMult(150);
-      mat = Matrix.mult(rotation, mat);
       return mat.toVector() as Point3D;
     });
     const twod = projectPoints(translated, camera);
