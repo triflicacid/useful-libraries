@@ -5,7 +5,7 @@ import { Vector } from "./Vector";
  * Each element is an instance of Complex
  */
 export class Matrix {
-  public matrix: number[][];
+  protected matrix: number[][];
 
   /**
    * To create a matrix, use Matrix['from'...] methods
@@ -24,9 +24,29 @@ export class Matrix {
     return this.matrix[r]?.[c];
   }
 
+  /** Get a given row */
+  public getRow(r: number) {
+    return this.matrix[r];
+  }
+
   /** Set (row, col) to <arg> */
   public set(r: number, c: number, n: number) {
     this.matrix[r][c] = n
+    return this;
+  }
+
+  /** Set a given row */
+  public setRow(r: number, values: number[]) {
+    if (values.length !== this.matrix[r].length) throw new Error(`Expected ${this.matrix[r].length} values, got ${values.length}`);
+    this.matrix[r] = values;
+    return this;
+  }
+
+  /** Swap two rows */
+  public swapRows(r1: number, r2: number) {
+    let tmp = this.matrix[r1];
+    this.matrix[r1] = this.matrix[r2];
+    this.matrix[r2] = tmp;
     return this;
   }
 
@@ -56,6 +76,13 @@ export class Matrix {
     return this.apply(x => x + n);
   }
 
+  /** Scalar add to a single row: returns new matrix */
+  public scalarAddRow(row: number, n: number) {
+    const matrix = this.copy();
+    matrix.setRow(row, matrix.getRow(row).map(e => e + n));
+    return matrix;
+  }
+
   /** Scalar subtraction: returns new Matrix */
   public scalarSub(n: number) {
     return this.apply(x => x - n);
@@ -64,6 +91,13 @@ export class Matrix {
   /** Scalar multiplication: returns new Matrix */
   public scalarMult(n: number) {
     return this.apply(x => x * n);
+  }
+
+  /** Scalar multiplication to a single row: returns new matrix */
+  public scalarMultRow(row: number, n: number) {
+    const matrix = this.copy();
+    matrix.setRow(row, matrix.getRow(row).map(e => e * n));
+    return matrix;
   }
 
   /** Scalar division: returns new Matrix */
@@ -90,6 +124,15 @@ export class Matrix {
       inter = res;
     }
     return inter;
+  }
+
+  /** Count occurences of a number in the given row */
+  public countOccurences(n: number, row: number) {
+    let count = 0;
+    this.matrix[row].forEach(e => {
+      if (e === n) count++;
+    });
+    return count;
   }
 
   /** Transpose this matrix: returns new Matrix */
@@ -340,88 +383,179 @@ export class Matrix {
     }
   }
 
-  /** Return matrix in row echelon form */
-  public static toRowEchelonForm(matrix: Matrix) {
-    let nr = matrix.rows, nc = matrix.cols;
-
-    // Bubble all all-zero rows to bottom of matrix
-    for (let r = 0; r < nr; ++r) {
-      // If row all zeroes?
-      let all0 = true;
-      for (let c = 0; c < nc; ++c) {
-        if (matrix.get(r, c) as any !== 0) {
-          all0 = false;
-          break;
-        }
-      }
-      // If all zero, swap row with last row
-      if (all0) {
-        // Swap row <r> with <nr>
-        swapRows(matrix, r, nr);
-        nr--;
-      }
-    }
-
-    let p = 0;
-    while (p < nr && p < nc) {
-      let repeat = true;
-      while (repeat) {
-        repeat = false;
-        let r = 1;
-        while (matrix.get(p, p) === 0) {
-          if (p + r <= nr) {
-            p++;
-            repeat = true;
-            break;
-          }
-          swapRows(matrix, p, p + r);
-          r++;
-        }
-
-        for (let r = 1; r < nr - p; ++r) {
-          if (matrix.get(p + r, p) as any !== 0) {
-            let x = -matrix.get(p + r, p) / matrix.get(p, p);
-            for (let c = p; c <= nc; ++c) {
-              matrix.set(p + r, c, matrix.get(p, c) * x + matrix.get(p + r, c));
-            }
-          }
-        }
-        p++;
-      }
-    }
-    return matrix;
+  /** Given an array of transformations, where a[0] is applies first, then a[1] etc... Return a single matrix representing said transformation. */
+  public static combineArray(array: Matrix[]) {
+    if (array.length === 0) throw new Error("Error: array is empty");
+    if (!array[0].isSquare()) throw new Error(`Expected matrix[0] to be square`);
+    const dim = array[0].rows;
+    for (let i = 0; i < array.length; i++)
+      if (array[0].rows !== dim || array[0].cols !== dim)
+        throw new Error(`Every matrix must have the same dimensions (matrix ${i})`);
+    let acc = array[array.length - 1];
+    for (let i = array.length - 2; i >= 0; i--)
+      acc = Matrix.mult(acc, array[i]);
+    return acc;
   }
 
-  /** Return matrix in reduced row echelon form */
-  public static toReducedRowEchelonForm(matrix: Matrix) {
-    let lead = 0, rowCount = matrix.rows, colCount = matrix.cols;
-    for (let r = 0; r < rowCount; ++r) {
-      if (colCount <= lead) return matrix;
-      let i = r;
-      while (matrix.get(i, lead) as any === 0) {
-        i++;
-        if (rowCount === i) {
-          i = r;
-          lead++;
-          if (colCount === lead) return matrix;
+  /** Is matrix in row echelon form? */
+  public isRowEchelon() {
+    const zeroes = this.matrix.map(row => row.findLastIndex((n: number) => n === 0));
+    for (let i = 0; i < zeroes.length - 1; i++)
+      if (zeroes[i] >= zeroes[i + 1]) return false;
+    return true;
+  }
+
+  /**
+   * Transforms matrix into Row Echelon Form
+   * @param matrix Matrix to transform. NB it is **mutated**.
+   * @param echo Matrix to echo changed in NB **mutated**.
+   * @return Array of elementary matrices required to reproduce
+  */
+  public static toRowEchelonForm(matrix: Matrix, echo?: Matrix) {
+    if (echo && matrix.rows !== echo.rows)
+      throw new Error(`Matrices <matrix> and <echo> must have the same number of rows`);
+    const sq = matrix.isSquare();
+    const elementary: Matrix[] = [];
+
+    // Bubble zeroes to end (basic bubble sort)
+    let done = false;
+    while (!done) {
+      done = true;
+      for (let i = 0; i < matrix.rows - 1; i++) {
+        const c = matrix.countOccurences(0, i);
+        const nc = matrix.countOccurences(0, i + 1);
+        if (c > nc) {
+          matrix.swapRows(i, i + 1);
+          done = false;
+          // Generate elementary matrix
+          if (sq) {
+            const I = Matrix.identity(matrix.cols);
+            I.swapRows(i, i + 1);
+            elementary.push(I);
+          }
+          // Echo?
+          if (echo) echo.swapRows(i, i + 1);
         }
       }
-
-      if (r !== r) swapRows(matrix, i, r);
-
-      const k = matrix.get(r, lead) as any;
-      for (let c = 0; c < colCount; ++c) matrix.set(r, c, (matrix.get(r, c) as any) / k);
-
-      for (let i = 0; i < rowCount; ++i) {
-        const k = matrix.get(i, lead) as any;
-        if (i !== r) {
-          for (let c = 0; c < colCount; ++c) matrix.set(i, c, (matrix.get(i, c) as any) - k * (matrix.get(r, c) as any));
-        }
-      }
-      lead++;
     }
 
-    return matrix;
+    let zeroAt = matrix.getRow(0).findIndex(n => n === 0);
+    const op = (a: number, b: number, x: number, y: number) => x - (a / b) * y;
+
+    for (let row = 1; row < matrix.rows; row++) {
+      for (let col = 0; col <= zeroAt + 1; col++) {
+        const a = matrix.get(row, col); // Value at current position - want to become 0
+        if (a === 0) continue; // If valud is already zero, skip
+
+        // Find row with a nonzero entry -- search above
+        let target = row - 1, b = NaN;
+        while (target >= 0) {
+          b = matrix.get(target, col)
+          if (b !== 0) break;
+          target--;
+        }
+        if (isNaN(b)) continue; // Can't find entry
+
+        const lastRow = matrix.getRow(target);
+        const newRow = matrix.getRow(row).map((e, i) => op(a, b, e, lastRow[i])); // Make a 0 at this position
+        matrix.setRow(row, newRow);
+        // Echo?
+        if (echo) {
+          const lastRow = echo.getRow(target);
+          const newRow = echo.getRow(row).map((e, i) => op(a, b, e, lastRow[i])); // Make a 0 at this position
+          echo.setRow(row, newRow);
+        }
+
+        if (sq) { // Generate the elementary row operation matrix
+          const I = Matrix.identity(matrix.cols);
+          I.set(row, target, -a / b);
+          elementary.push(I);
+        }
+      }
+      zeroAt = matrix.getRow(row).findIndex(n => n === 0);
+    }
+
+    return elementary;
+  }
+
+  /**
+   * Transforms matrix into Row Echelon Form
+   * @param matrix Matrix to transform. NB it is **mutated**.
+   * @param echo Matrix to echo changed in NB **mutated**.
+   * @return Array of elementary matrices required to reproduce
+  */
+  public static toReducedRowEchelonForm(matrix: Matrix, echo?: Matrix) {
+    if (echo && matrix.rows !== echo.rows)
+      throw new Error(`Matrices <matrix> and <echo> must have the same number of rows`);
+    let elementary: Matrix[];
+    const sq = matrix.isSquare();
+
+    // Convert to row echelon form first!
+    if (matrix.isRowEchelon()) {
+      elementary = [];
+    } else {
+      elementary = Matrix.toRowEchelonForm(matrix, echo);
+    }
+
+    const op = (a: number, b: number, x: number, y: number) => x - (a / b) * y;
+
+    for (let row = matrix.rows - 1; row >= 0; row--) {
+      let nonZeroAt = matrix.getRow(row).findIndex(n => n !== 0);
+
+      // Remove all zeroes
+      for (let col = matrix.cols - 1; col > nonZeroAt; col--) {
+        const a = matrix.get(row, col); // Value at current position - want to become 0
+        if (a === 0) continue; // If valud is already zero, skip
+
+        // Find row with a nonzero entry -- search below
+        let target = matrix.rows - 1, b = NaN;
+        while (target > row) {
+          b = matrix.get(target, col);
+          if (b !== 0) break;
+          target--;
+        }
+        if (isNaN(b)) continue; // If no nonzero entry, skip
+
+        const lastRow = matrix.getRow(target);
+        const newRow = matrix.getRow(row).map((e, i) => op(a, b, e, lastRow[i])); // Make a 0 at this position
+        matrix.setRow(row, newRow);
+
+        // Echo?
+        if (echo) {
+          const lastRow = echo.getRow(target);
+          const newRow = echo.getRow(row).map((e, i) => op(a, b, e, lastRow[i])); // Make a 0 at this position
+          echo.setRow(row, newRow);
+        }
+
+        if (sq) { // Generate the elementary row operation matrix
+          const I = Matrix.identity(matrix.cols);
+          I.set(row, target, -a / b);
+          elementary.push(I);
+        }
+      }
+
+      // Set pivot to one
+      const k = 1 / matrix.get(row, nonZeroAt);
+      if (k !== 1) {
+        if (!isFinite(k)) console.log(k, matrix.toString())
+        matrix.setRow(row, matrix.getRow(row).map(e => e * k));
+
+        // Echo?
+        if (echo) echo.setRow(row, echo.getRow(row).map(e => e * k));
+
+        if (sq) { // Generate the elementary row operation matrix
+          const I = Matrix.identity(matrix.cols);
+          I.set(row, nonZeroAt, k);
+          elementary.push(I);
+        }
+      }
+    }
+    return elementary;
+  }
+
+  /** Return new square matrix */
+  public static square(size: number, n = 0) {
+    return new Matrix(Array.from({ length: size }, (_, r) => Array.from({ length: size }, () => n)));
   }
 
   /** Return identity matrix */
@@ -650,5 +784,5 @@ function swapRows(matrix: Matrix, r1: number, r2: number) {
   return matrix;
 }
 
-const E_SAMESIZE = new Error(`Matrix: given matrices must be the same size`);
-const E_SQUARE = new Error(`Matrix: matrix must be square`);
+export const E_SAMESIZE = new Error(`Matrix: given matrices must be the same size`);
+export const E_SQUARE = new Error(`Matrix: matrix must be square`);
